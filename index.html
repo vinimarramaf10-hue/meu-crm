@@ -262,7 +262,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .mini-bar-label{font-size:9px;color:var(--text3);text-align:center}
 .mini-bar-val{font-size:9px;color:var(--text2)}
 
-/* RESPONSIVE */
+/* MASTERMIND */
+.mast-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+.mast-col{min-width:220px;flex:1}
+.mast-col-header{padding:10px 12px;border-radius:var(--r);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.mast-col-title{font-size:13px;font-weight:600}
+.mast-col-count{font-size:11px;padding:2px 8px;border-radius:10px}
+.mast-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:8px;cursor:grab;transition:all .15s;position:relative}
+.mast-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.mast-card.dragging{opacity:.4}
+.mast-col.drag-over .mast-drop{background:var(--accent-glow);border:2px dashed var(--accent);border-radius:var(--r2)}
+.mast-drop{min-height:60px;border-radius:var(--r2)}
+.mast-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.mast-insta{font-size:12px;color:#c084fc;margin-bottom:6px}
+.mast-insta a{color:#c084fc;text-decoration:none}
+.mast-insta a:hover{text-decoration:underline}
+.mast-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;opacity:0;transition:opacity .15s}
+.mast-card:hover .mast-del{opacity:1}
 @media(max-width:768px){
   .sidebar{width:56px}.logo-txt,.nav-group-label,.nav-item span{display:none}
   .nav-item{justify-content:center}.nav-icon{margin:0}
@@ -298,6 +314,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <button class="nav-item" onclick="goTo('alertas',this)"><span class="nav-icon">🔔</span><span>Alertas</span><span class="badge red" id="nav-alerts-badge">0</span></button>
         <button class="nav-item" onclick="goTo('relatorios',this)"><span class="nav-icon">📈</span><span>Relatórios</span></button>
       </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Prospecção</div>
+        <button class="nav-item" onclick="goTo('mastermind',this)"><span class="nav-icon">🎯</span><span>Mastermind</span><span class="badge" id="nav-mast-badge">0</span></button>
+      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="sync-pill"><div class="sync-dot"></div><span id="sync-txt">Online · compartilhado</span></div>
@@ -314,10 +334,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <input class="search-input" placeholder="Buscar lead, empresa..." oninput="globalSearch(this.value)" id="global-search"/>
         </div>
       </div>
-      <div class="topbar-right">
+      <div class="topbar-right" id="topbar-right">
         <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 Importar</button>
         <button class="btn btn-ghost btn-sm" onclick="openModal('activity')">+ Atividade</button>
-        <button class="btn btn-primary" onclick="openModal('lead')">+ Novo Lead</button>
+        <button class="btn btn-primary" id="btn-novo-lead" onclick="openModal('lead')">+ Novo Lead</button>
+        <button class="btn btn-primary" id="btn-novo-mast" style="display:none" onclick="openMastModal()">+ Nova Prospecção</button>
       </div>
     </div>
 
@@ -453,6 +474,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
       </div>
 
+      <!-- MASTERMIND -->
+      <div id="sec-mastermind" class="section">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:18px">🎯 Prospecção Ativa · Arraste os cards para avançar a fase</div>
+        <div class="mast-board" id="mast-board"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -464,6 +491,32 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <button class="icon-btn" onclick="closeDetail()">✕</button>
   </div>
   <div class="detail-body" id="detail-body"></div>
+</div>
+
+<!-- MASTERMIND MODAL -->
+<div class="modal-overlay" id="mast-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" id="mast-modal-title">🎯 Nova Prospecção</div>
+    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="mf-name" placeholder="Nome da pessoa"></div>
+    <div class="form-group"><label class="form-label">Instagram</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="color:var(--text3);font-size:13px">instagram.com/</span>
+        <input class="form-input" id="mf-insta" placeholder="usuario" style="flex:1">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Fase</label>
+      <select class="form-select" id="mf-fase">
+        <option value="primeiro_contato">👋 Primeiro Contato</option>
+        <option value="follow_up">🔁 Follow Up</option>
+        <option value="reuniao_marcada">📅 Reunião Marcada</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Observação</label><textarea class="form-textarea" id="mf-obs" placeholder="Notas sobre essa prospecção..." style="min-height:60px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeMastModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMast()">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- IMPORT MODAL -->
@@ -607,6 +660,7 @@ function renderAll() {
   else if (currentSection === 'atividades') renderActivities();
   else if (currentSection === 'alertas') renderAlerts();
   else if (currentSection === 'relatorios') renderReports();
+  else if (currentSection === 'mastermind') renderMastermind();
 }
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
@@ -632,6 +686,7 @@ function updateBadges() {
     return (l.temp==='quente'&&d>2)||(d>7&&l.stage!=='fechado'&&l.stage!=='perdido');
   }).length;
   document.getElementById('nav-alerts-badge').textContent = alertCount;
+  document.getElementById('nav-mast-badge').textContent = prospecoes.length;
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -706,7 +761,9 @@ function renderLeadsTable() {
       const wlink = l.phone ? `<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="Abrir WhatsApp" style="color:#00e5a0;text-decoration:none;margin-left:6px">💬</a>` : '';
       return `<tr onclick="openDetail(${l.id})" style="cursor:pointer">
         <td><div class="lead-name-wrap"><div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-          <div><div class="lead-name">${l.name}${wlink}</div><div class="lead-company">${l.company||'—'}</div></div></div></td>
+          <div><div class="lead-name">${l.name}${wlink}</div><div class="lead-company">${l.company||'—'}</div>
+          ${l.produto?`<div style="font-size:10px;color:var(--purple);margin-top:2px">${{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',ambos:'🎯👑 Ambos'}[l.produto]||''}</div>`:''}
+          </div></div></td>
         <td><span class="temp-badge temp-${l.temp}">${TEMP_LBL[l.temp]||l.temp}</span></td>
         <td><span class="stage-badge stage-${l.stage}">${STAGE_LBL[l.stage]||l.stage}</span></td>
         <td style="font-weight:600;color:var(--accent)">${l.value?fmtMoneyFull(+l.value):'—'}</td>
@@ -1094,7 +1151,9 @@ function openDetail(id) {
         ['Telefone',l.phone?(l.phone+` <a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" style="color:#00e5a0;font-size:12px;text-decoration:none">💬 WhatsApp</a>`):('—')],
         ['Temperatura',TEMP_LBL[l.temp]||l.temp],['Estágio',STAGE_LBL[l.stage]||l.stage],
         ['Valor',l.value?fmtMoneyFull(+l.value):'—'],['Origem',l.origin||'—'],
-        ['Follow-up',l.followup||'—'],['Urgência',l.urgency||'—'],['Score',sc+' pts'],
+        ['Follow-up',l.followup||'—'],['Urgência',l.urgency||'—'],
+        ['Produto',{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',ambos:'🎯👑 Ambos'}[l.produto]||'—'],
+        ['Score',sc+' pts'],
       ].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
     </div>
     ${l.pain?`<div class="detail-section"><div class="detail-section-title">DNA do cliente</div>
@@ -1152,6 +1211,7 @@ function leadForm(l) {
     <div class="form-group"><label class="form-label">Temperatura</label>${sel('f-temp',[['quente','🔥 Quente'],['morno','🟡 Morno'],['frio','❄️ Frio']],l.temp||'morno')}</div>
     <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',STAGES.map(s=>[s,STAGE_LBL[s]]),l.stage||'lead')}</div>
   </div>
+  <div class="form-group"><label class="form-label">🎯 Produto de interesse</label>${sel('f-produto',[['vendedor_x','Vendedor X'],['lider_x','Líder X'],['ambos','Ambos']],l.produto||'vendedor_x')}</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Valor estimado (R$)</label><input class="form-input" id="f-value" type="number" value="${l.value||''}" placeholder="Ex: 5000"></div>
     <div class="form-group"><label class="form-label">Origem</label>${sel('f-origin',[['indicacao','Indicação'],['instagram','Instagram'],['google','Google'],['whatsapp','WhatsApp'],['email','E-mail'],['evento','Evento'],['outro','Outro']],l.origin||'outro')}</div>
@@ -1192,6 +1252,7 @@ function saveModal() {
       pain:document.getElementById('f-pain').value.trim(), desire:document.getElementById('f-desire').value.trim(),
       notes:document.getElementById('f-notes').value.trim(),
       followup:document.getElementById('f-followup').value,
+      produto:document.getElementById('f-produto').value,
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
@@ -1231,8 +1292,10 @@ function goTo(name, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
-  const titles = {dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios'};
+  const titles = {dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind'};
   document.getElementById('page-title').textContent = titles[name]||name;
+  document.getElementById('btn-novo-lead').style.display = name==='mastermind'?'none':'inline-flex';
+  document.getElementById('btn-novo-mast').style.display = name==='mastermind'?'inline-flex':'none';
   renderAll();
 }
 
@@ -1305,8 +1368,109 @@ function downloadTemplate() {
   showToast('Modelo baixado ✓');
 }
 
+// ─── MASTERMIND ───────────────────────────────────────────────────────────────
+let prospecoes = [];
+let mastEditId = null;
+let mastDragId = null;
+
+const MAST_FASES = ['primeiro_contato','follow_up','reuniao_marcada'];
+const MAST_FASE_LBL = {primeiro_contato:'👋 Primeiro Contato',follow_up:'🔁 Follow Up',reuniao_marcada:'📅 Reunião Marcada'};
+const MAST_COLORS = {primeiro_contato:'#3d8ef8',follow_up:'#ff7b35',reuniao_marcada:'#00e5a0'};
+
+async function saveMastData() {
+  try {
+    if(typeof window.storage!=='undefined') await window.storage.set('crm_v2_prospecoes',JSON.stringify(prospecoes),true);
+    else localStorage.setItem('crm_v2_prospecoes',JSON.stringify(prospecoes));
+  } catch(e){}
+}
+
+async function loadMastData() {
+  try {
+    if(typeof window.storage!=='undefined'){
+      const r = await window.storage.get('crm_v2_prospecoes',true).catch(()=>null);
+      prospecoes = r ? JSON.parse(r.value) : [];
+    } else {
+      const s = localStorage.getItem('crm_v2_prospecoes');
+      prospecoes = s ? JSON.parse(s) : [];
+    }
+  } catch(e){ prospecoes=[]; }
+}
+
+function renderMastermind() {
+  const board = document.getElementById('mast-board');
+  board.innerHTML = MAST_FASES.map(fase=>{
+    const items = prospecoes.filter(p=>p.fase===fase);
+    const col = MAST_COLORS[fase];
+    return `<div class="mast-col" ondragover="mastDragOver(event,'${fase}')" ondragleave="mastDragLeave(event)" ondrop="mastDrop(event,'${fase}')">
+      <div class="mast-col-header" style="background:${col}15;border:1px solid ${col}30">
+        <span class="mast-col-title" style="color:${col}">${MAST_FASE_LBL[fase]}</span>
+        <span class="mast-col-count" style="background:${col}25;color:${col}">${items.length}</span>
+      </div>
+      <div class="mast-drop">
+        ${items.length ? items.map(p=>`
+          <div class="mast-card" draggable="true" ondragstart="mastDragStart(event,${p.id})" ondragend="mastDragEnd(event)">
+            <button class="mast-del" onclick="deleteMast(${p.id})">✕</button>
+            <div class="mast-name">${p.name}</div>
+            ${p.insta?`<div class="mast-insta">📸 <a href="https://instagram.com/${p.insta}" target="_blank">@${p.insta}</a></div>`:''}
+            ${p.obs?`<div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5">${p.obs}</div>`:''}
+            <div style="margin-top:8px">
+              <button onclick="editMast(${p.id})" style="font-size:11px;background:none;border:1px solid var(--border2);color:var(--text2);padding:3px 8px;border-radius:6px;cursor:pointer">✏️ Editar</button>
+            </div>
+          </div>`).join('')
+          : `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">vazio</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openMastModal() {
+  mastEditId = null;
+  document.getElementById('mast-modal-title').textContent = '🎯 Nova Prospecção';
+  document.getElementById('mf-name').value='';
+  document.getElementById('mf-insta').value='';
+  document.getElementById('mf-fase').value='primeiro_contato';
+  document.getElementById('mf-obs').value='';
+  document.getElementById('mast-modal').classList.add('open');
+}
+function editMast(id) {
+  const p = prospecoes.find(x=>x.id===id); if(!p) return;
+  mastEditId = id;
+  document.getElementById('mast-modal-title').textContent = '✏️ Editar Prospecção';
+  document.getElementById('mf-name').value = p.name||'';
+  document.getElementById('mf-insta').value = p.insta||'';
+  document.getElementById('mf-fase').value = p.fase||'primeiro_contato';
+  document.getElementById('mf-obs').value = p.obs||'';
+  document.getElementById('mast-modal').classList.add('open');
+}
+function closeMastModal() { document.getElementById('mast-modal').classList.remove('open'); mastEditId=null; }
+function saveMast() {
+  const name = document.getElementById('mf-name').value.trim();
+  if(!name){ showToast('Informe o nome','#ff4757'); return; }
+  const data = { name, insta:document.getElementById('mf-insta').value.trim().replace('@',''), fase:document.getElementById('mf-fase').value, obs:document.getElementById('mf-obs').value.trim() };
+  if(mastEditId){ const i=prospecoes.findIndex(x=>x.id===mastEditId); prospecoes[i]={...prospecoes[i],...data}; showToast('Prospecção atualizada ✓'); }
+  else { prospecoes.push({...data,id:Date.now()}); showToast('Prospecção adicionada ✓'); }
+  closeMastModal(); saveMastData(); renderMastermind(); updateBadges();
+}
+function deleteMast(id) {
+  if(!confirm('Excluir esta prospecção?')) return;
+  prospecoes = prospecoes.filter(p=>p.id!==id);
+  saveMastData(); renderMastermind(); updateBadges(); showToast('Removido ✓');
+}
+function mastDragStart(e,id){ mastDragId=id; setTimeout(()=>e.target.classList.add('dragging'),0); }
+function mastDragEnd(e){ e.target.classList.remove('dragging'); document.querySelectorAll('.mast-col').forEach(c=>c.classList.remove('drag-over')); }
+function mastDragOver(e,fase){ e.preventDefault(); document.querySelectorAll('.mast-col').forEach(c=>c.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function mastDragLeave(e){ if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drag-over'); }
+function mastDrop(e,fase){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(!mastDragId) return;
+  const i = prospecoes.findIndex(p=>p.id===mastDragId);
+  if(i>-1 && prospecoes[i].fase!==fase){ prospecoes[i].fase=fase; saveMastData(); renderMastermind(); showToast(`Movido para ${MAST_FASE_LBL[fase]} ✓`); }
+  mastDragId=null;
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-loadData();
+async function init() { await loadData(); await loadMastData(); renderAll(); }
+init();
 </script>
 </body>
 </html>
