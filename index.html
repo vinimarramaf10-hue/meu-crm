@@ -229,6 +229,39 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .empty-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
 .empty-sub{font-size:13px;color:var(--text3)}
 
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 20px}
+.welcome-logo{width:72px;height:72px;background:var(--accent);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 24px}
+.welcome-title{font-family:var(--font-head);font-size:28px;font-weight:700;margin-bottom:8px}
+.welcome-title span{color:var(--accent)}
+.welcome-sub{font-size:14px;color:var(--text2);margin-bottom:32px;max-width:420px}
+.welcome-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.welcome-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:20px 24px;cursor:pointer;transition:all .2s;min-width:140px}
+.welcome-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.welcome-card-icon{font-size:24px;margin-bottom:8px}
+.welcome-card-label{font-size:13px;font-weight:500}
+
+/* DRAG & DROP */
+.pipe-card{cursor:grab}
+.pipe-card:active{cursor:grabbing}
+.pipe-card.dragging{opacity:.4;transform:scale(.97)}
+.pipe-col-drop{min-height:80px}
+.pipe-col.drag-over .pipe-col-drop{background:var(--accent-glow);border:2px dashed var(--accent);border-radius:var(--r2)}
+
+/* IMPORT */
+.import-zone{border:2px dashed var(--border2);border-radius:var(--r2);padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.import-zone:hover,.import-zone.over{border-color:var(--accent);background:var(--accent-glow)}
+.import-zone-icon{font-size:28px;margin-bottom:8px}
+.import-zone-label{font-size:13px;color:var(--text2)}
+.import-preview{font-size:12px;color:var(--text2);margin-top:10px}
+
+/* MINI CHART */
+.mini-bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;padding-top:10px}
+.mini-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
+.mini-bar{width:100%;border-radius:4px 4px 0 0;transition:height .4s;min-height:4px}
+.mini-bar-label{font-size:9px;color:var(--text3);text-align:center}
+.mini-bar-val{font-size:9px;color:var(--text2)}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .sidebar{width:56px}.logo-txt,.nav-group-label,.nav-item span{display:none}
@@ -282,6 +315,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
       </div>
       <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 Importar</button>
         <button class="btn btn-ghost btn-sm" onclick="openModal('activity')">+ Atividade</button>
         <button class="btn btn-primary" onclick="openModal('lead')">+ Novo Lead</button>
       </div>
@@ -292,20 +326,38 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
       <!-- DASHBOARD -->
       <div id="sec-dashboard" class="section active">
-        <div class="stats-grid" id="stats-grid"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div class="card">
-            <div class="card-header"><div class="card-title">🔥 Leads quentes agora</div></div>
-            <div id="dash-hot-leads"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">⚡ Próximas ações (NBA)</div></div>
-            <div id="dash-nba"></div>
+        <div id="welcome-screen" style="display:none">
+          <div class="welcome">
+            <div class="welcome-logo">⚡</div>
+            <div class="welcome-title">Bem-vindo ao <span>APRIMORE CRM</span></div>
+            <div class="welcome-sub">Sua central de gestão de leads e vendas. Comece adicionando seu primeiro lead ou importando uma lista.</div>
+            <div class="welcome-actions">
+              <div class="welcome-card" onclick="openModal('lead')"><div class="welcome-card-icon">👤</div><div class="welcome-card-label">Adicionar lead</div></div>
+              <div class="welcome-card" onclick="openImportModal()"><div class="welcome-card-icon">📥</div><div class="welcome-card-label">Importar planilha</div></div>
+              <div class="welcome-card" onclick="goTo('pipeline',document.querySelector('.nav-item:nth-child(3)'))"><div class="welcome-card-icon">🏆</div><div class="welcome-card-label">Ver pipeline</div></div>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">📅 Atividades recentes</div></div>
-          <div id="dash-activities"></div>
+        <div id="dash-main">
+          <div class="stats-grid" id="stats-grid"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">🔥 Leads quentes</div></div>
+              <div id="dash-hot-leads"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">⚡ Próximas ações (NBA)</div></div>
+              <div id="dash-nba"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">📊 Pipeline por estágio</div></div>
+              <div class="mini-bar-chart" id="dash-chart"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📅 Atividades recentes</div></div>
+            <div id="dash-activities"></div>
+          </div>
         </div>
       </div>
 
@@ -337,6 +389,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
             <option value="evento">Evento</option>
             <option value="outro">Outro</option>
           </select>
+          <button class="btn btn-ghost btn-sm" onclick="openImportModal()" style="margin-left:auto">📥 Importar CSV</button>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
           <div id="leads-table-wrap"></div>
@@ -411,6 +464,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <button class="icon-btn" onclick="closeDetail()">✕</button>
   </div>
   <div class="detail-body" id="detail-body"></div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="width:520px">
+    <div class="modal-title">📥 Importar leads via CSV / Excel</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7">
+      Importe uma planilha CSV com colunas: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">Nome, Empresa, Email, Telefone, Valor, Origem, Temperatura, Estágio</code><br>
+      A primeira linha deve ser o cabeçalho. Campos não reconhecidos serão ignorados.
+    </div>
+    <div class="import-zone" id="import-zone" onclick="document.getElementById('import-file').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleImportDrop(event)">
+      <div class="import-zone-icon">📂</div>
+      <div class="import-zone-label">Clique para selecionar ou arraste o arquivo aqui</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Suporta .csv e .txt</div>
+    </div>
+    <input type="file" id="import-file" accept=".csv,.txt" style="display:none" onchange="handleImportFile(this)"/>
+    <div id="import-preview" style="display:none">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--text2)" id="import-count"></div>
+      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);font-size:12px" id="import-table-wrap"></div>
+    </div>
+    <div style="margin-top:14px;font-size:12px;color:var(--text3)">
+      💡 Não tem planilha? <a href="#" onclick="downloadTemplate();return false" style="color:var(--accent)">Baixe o modelo aqui</a>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeImportModal()">Cancelar</button>
+      <button class="btn btn-primary" id="import-confirm-btn" onclick="confirmImport()" style="display:none">Importar leads</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -555,29 +636,49 @@ function updateBadges() {
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDashboard() {
+  const hasLeads = leads.length > 0;
+  document.getElementById('welcome-screen').style.display = hasLeads ? 'none' : 'block';
+  document.getElementById('dash-main').style.display = hasLeads ? 'block' : 'none';
+  if (!hasLeads) return;
+
   const hot = leads.filter(l=>l.temp==='quente'&&l.stage!=='fechado'&&l.stage!=='perdido').sort((a,b)=>scoreOf(b)-scoreOf(a)).slice(0,5);
   const hlEl = document.getElementById('dash-hot-leads');
-  if (!hot.length) { hlEl.innerHTML='<div class="empty"><div class="empty-icon">🔥</div><div class="empty-sub">Nenhum lead quente ainda</div></div>'; }
+  if (!hot.length) { hlEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-icon" style="font-size:24px">🔥</div><div class="empty-sub">Nenhum lead quente ainda</div></div>'; }
   else hlEl.innerHTML = hot.map(l=>{
     const [bg,fg]=avCol(l.name); const sc=scoreOf(l);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)" onclick="openDetail(${l.id})">
+    const dias = daysSince(l.updatedAt||l.createdAt);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail(${l.id})">
       <div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${l.company||''}${l.value?' · '+fmtMoney(+l.value):''}</div></div>
-      <div style="text-align:right"><div style="font-size:12px;font-weight:700;color:${scoreColor(sc)}">${sc}pts</div><div class="temp-badge temp-quente" style="font-size:10px;padding:2px 7px">🔥</div></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${l.company||''}${l.value?' · '+fmtMoney(+l.value):''} · ${dias}d</div></div>
+      <div style="font-size:12px;font-weight:700;color:${scoreColor(sc)}">${sc}pts</div>
     </div>`}).join('');
 
   const nba = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').sort((a,b)=>scoreOf(b)-scoreOf(a)).slice(0,5);
   const nbaEl = document.getElementById('dash-nba');
-  if (!nba.length) { nbaEl.innerHTML='<div class="empty"><div class="empty-sub">Adicione leads para ver sugestões</div></div>'; }
+  if (!nba.length) { nbaEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Adicione leads para ver sugestões</div></div>'; }
   else nbaEl.innerHTML = nba.map(l=>`
     <div style="padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:500;margin-bottom:3px">${l.name}</div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between">
+        <span>${l.name}</span>
+        ${l.followup?`<span style="font-size:10px;color:var(--yellow)">📅 ${l.followup}</span>`:''}
+      </div>
       <div class="nba-chip">${nbaFor(l)}</div>
+    </div>`).join('');
+
+  const pipeStages = ['lead','qualificado','proposta','negociacao','fechado'];
+  const colors3 = ['#3d8ef8','#a855f7','#ff7b35','#ffcc00','#00e5a0'];
+  const counts = pipeStages.map(s=>leads.filter(l=>l.stage===s).length);
+  const maxC = Math.max(1,...counts);
+  document.getElementById('dash-chart').innerHTML = pipeStages.map((s,i)=>`
+    <div class="mini-bar-wrap">
+      <div class="mini-bar-val">${counts[i]}</div>
+      <div class="mini-bar" style="height:${Math.max(counts[i]/maxC*60,counts[i]>0?6:0)}px;background:${colors3[i]}"></div>
+      <div class="mini-bar-label">${{lead:'Lead',qualificado:'Quali.',proposta:'Prop.',negociacao:'Neg.',fechado:'Fecha.'}[s]}</div>
     </div>`).join('');
 
   const recent = [...activities].slice(0,5);
   const actEl = document.getElementById('dash-activities');
-  if (!recent.length) { actEl.innerHTML='<div class="empty"><div class="empty-sub">Nenhuma atividade ainda</div></div>'; }
+  if (!recent.length) { actEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Nenhuma atividade ainda</div></div>'; }
   else actEl.innerHTML = recent.map(a=>actHTML(a)).join('');
 }
 
@@ -598,17 +699,18 @@ function renderLeadsTable() {
   if (!list.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Nenhum lead encontrado</div><div class="empty-sub">Clique em "+ Novo Lead" para começar</div></div>'; return; }
   wrap.innerHTML = `<table class="leads-table">
     <thead><tr>
-      <th>Nome</th><th>Temperatura</th><th>Estágio</th><th>Valor</th><th>Origem</th><th>Score</th><th>Próx. ação</th><th></th>
+      <th>Nome</th><th>Temperatura</th><th>Estágio</th><th>Valor</th><th>Follow-up</th><th>Score</th><th>Próx. ação</th><th></th>
     </tr></thead>
     <tbody>${list.map(l=>{
       const [bg,fg]=avCol(l.name); const sc=scoreOf(l);
+      const wlink = l.phone ? `<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="Abrir WhatsApp" style="color:#00e5a0;text-decoration:none;margin-left:6px">💬</a>` : '';
       return `<tr onclick="openDetail(${l.id})" style="cursor:pointer">
         <td><div class="lead-name-wrap"><div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-          <div><div class="lead-name">${l.name}</div><div class="lead-company">${l.company||'—'}</div></div></div></td>
+          <div><div class="lead-name">${l.name}${wlink}</div><div class="lead-company">${l.company||'—'}</div></div></div></td>
         <td><span class="temp-badge temp-${l.temp}">${TEMP_LBL[l.temp]||l.temp}</span></td>
         <td><span class="stage-badge stage-${l.stage}">${STAGE_LBL[l.stage]||l.stage}</span></td>
         <td style="font-weight:600;color:var(--accent)">${l.value?fmtMoneyFull(+l.value):'—'}</td>
-        <td style="color:var(--text2);font-size:12px">${l.origin||'—'}</td>
+        <td style="font-size:11px;color:${l.followup?'var(--yellow)':'var(--text3)'}">${l.followup||'—'}</td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${scoreColor(sc)}"></div></div><span style="font-size:11px;color:${scoreColor(sc)}">${sc}</span></div></td>
         <td><div class="nba-chip" style="font-size:10px">${nbaFor(l)}</div></td>
         <td onclick="event.stopPropagation()"><div class="action-btns">
@@ -630,7 +732,9 @@ function filterByStage(v) { filterStage = v; renderLeadsTable(); }
 function filterByOrigin(v) { filterOrigin = v; renderLeadsTable(); }
 function globalSearch(v) { searchQ = v; if(currentSection==='leads') renderLeadsTable(); }
 
-// ─── PIPELINE ─────────────────────────────────────────────────────────────────
+// ─── PIPELINE (DRAG & DROP) ───────────────────────────────────────────────────
+let dragLeadId = null;
+
 function renderPipeline() {
   const board = document.getElementById('pipeline-board');
   const pipeStages = ['lead','qualificado','proposta','negociacao','fechado'];
@@ -639,27 +743,64 @@ function renderPipeline() {
     const sd = leads.filter(l=>l.stage===stage);
     const total = sd.reduce((s,l)=>s+(+l.value||0),0);
     const col = colors[stage];
-    return `<div class="pipe-col">
+    return `<div class="pipe-col col-${stage}" ondragover="pipeDragOver(event,'${stage}')" ondragleave="pipeDragLeave(event)" ondrop="pipeDrop(event,'${stage}')">
       <div class="pipe-col-header" style="background:${col}15;border:1px solid ${col}30">
         <div><div class="pipe-col-title" style="color:${col}">${STAGE_LBL[stage]}</div>
         <div class="pipe-col-total" style="color:${col}">${total?fmtMoneyFull(total):''}</div></div>
         <span class="pipe-col-count" style="background:${col}25;color:${col}">${sd.length}</span>
       </div>
+      <div class="pipe-col-drop">
       ${sd.length?sd.map(l=>{
         const prob = STAGE_PROB[stage];
-        return `<div class="pipe-card" onclick="openDetail(${l.id})">
+        const dias = daysSince(l.updatedAt||l.createdAt);
+        const diasColor = dias>7?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
+        const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00e5a0;font-size:11px;text-decoration:none" title="WhatsApp">💬 WhatsApp</a>`:'';
+        return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})">
           <div class="pipe-card-title">${l.name}</div>
           <div class="pipe-card-company">${l.company||'Sem empresa'}</div>
           ${l.value?`<div class="pipe-card-value">${fmtMoneyFull(+l.value)}</div>`:''}
           <div class="pipe-card-meta">
-            <span class="pipe-card-days">${daysSince(l.updatedAt||l.createdAt)}d no estágio</span>
+            <span class="pipe-card-days" style="color:${diasColor}">${dias}d no estágio</span>
             <span class="pipe-card-prob" style="background:${scoreColor(prob)}20;color:${scoreColor(prob)}">${prob}%</span>
           </div>
-          <div class="nba-chip">${nbaFor(l)}</div>
+          ${l.followup?`<div style="font-size:10px;color:var(--yellow);margin-top:5px">📅 Follow-up: ${l.followup}</div>`:''}
+          <div class="nba-chip" style="margin-top:6px">${nbaFor(l)}</div>
+          ${wlink?`<div style="margin-top:6px">${wlink}</div>`:''}
         </div>`;
       }).join(''):`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">vazio</div>`}
+      </div>
     </div>`;
   }).join('');
+}
+
+function pipeDragStart(e, id) {
+  dragLeadId = id;
+  setTimeout(()=>{ const el=e.target; if(el) el.classList.add('dragging'); },0);
+}
+function pipeDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.pipe-col').forEach(c=>c.classList.remove('drag-over'));
+}
+function pipeDragOver(e, stage) {
+  e.preventDefault();
+  document.querySelectorAll('.pipe-col').forEach(c=>c.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function pipeDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drag-over');
+}
+function pipeDrop(e, stage) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragLeadId) return;
+  const idx = leads.findIndex(l=>l.id===dragLeadId);
+  if (idx>-1 && leads[idx].stage !== stage) {
+    leads[idx].stage = stage;
+    leads[idx].updatedAt = Date.now();
+    save(); renderAll();
+    showToast(`Lead movido para ${STAGE_LBL[stage]} ✓`);
+  }
+  dragLeadId = null;
 }
 
 // ─── ACTIVITIES ───────────────────────────────────────────────────────────────
@@ -949,10 +1090,11 @@ function openDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">Perfil do lead</div>
       ${[
-        ['Nome',l.name],['Empresa',l.company||'—'],['E-mail',l.email||'—'],['Telefone',l.phone||'—'],
+        ['Nome',l.name],['Empresa',l.company||'—'],['E-mail',l.email||'—'],
+        ['Telefone',l.phone?(l.phone+` <a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" style="color:#00e5a0;font-size:12px;text-decoration:none">💬 WhatsApp</a>`):('—')],
         ['Temperatura',TEMP_LBL[l.temp]||l.temp],['Estágio',STAGE_LBL[l.stage]||l.stage],
         ['Valor',l.value?fmtMoneyFull(+l.value):'—'],['Origem',l.origin||'—'],
-        ['Urgência',l.urgency||'—'],['Score',sc+' pts'],
+        ['Follow-up',l.followup||'—'],['Urgência',l.urgency||'—'],['Score',sc+' pts'],
       ].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
     </div>
     ${l.pain?`<div class="detail-section"><div class="detail-section-title">DNA do cliente</div>
@@ -1020,7 +1162,11 @@ function leadForm(l) {
   </div>
   <div class="form-group"><label class="form-label">Dor / problema principal</label><input class="form-input" id="f-pain" value="${l.pain||''}" placeholder="Qual problema ele quer resolver?"></div>
   <div class="form-group"><label class="form-label">Desejo / resultado esperado</label><input class="form-input" id="f-desire" value="${l.desire||''}" placeholder="O que ele quer alcançar?"></div>
-  <div class="form-group"><label class="form-label">Notas internas</label><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>`;
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
+    <div class="form-group"><label class="form-label">Notas internas</label></div>
+  </div>
+  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>`;
 }
 
 function activityForm(prefillLeadId) {
@@ -1045,6 +1191,7 @@ function saveModal() {
       urgency:document.getElementById('f-urgency').value, budget:document.getElementById('f-budget').value,
       pain:document.getElementById('f-pain').value.trim(), desire:document.getElementById('f-desire').value.trim(),
       notes:document.getElementById('f-notes').value.trim(),
+      followup:document.getElementById('f-followup').value,
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
@@ -1096,6 +1243,66 @@ function showToast(msg, color) {
   document.getElementById('toast-dot').style.background=color||'var(--accent)';
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ─── IMPORT CSV ───────────────────────────────────────────────────────────────
+let importedLeads = [];
+
+function openImportModal() { document.getElementById('import-modal').classList.add('open'); importedLeads=[]; document.getElementById('import-preview').style.display='none'; document.getElementById('import-confirm-btn').style.display='none'; }
+function closeImportModal() { document.getElementById('import-modal').classList.remove('open'); document.getElementById('import-file').value=''; }
+
+function handleImportDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file) parseCSVFile(file);
+}
+function handleImportFile(input) { if(input.files[0]) parseCSVFile(input.files[0]); }
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l=>l.trim());
+    if (lines.length < 2) { showToast('Arquivo inválido ou vazio','#ff4757'); return; }
+    const headers = lines[0].split(/[,;]/).map(h=>h.trim().toLowerCase().replace(/['"]/g,''));
+    const map = {nome:['nome','name'],empresa:['empresa','company','organização'],email:['email','e-mail'],telefone:['telefone','phone','celular','whatsapp'],valor:['valor','value','price','preço'],origem:['origem','origin','fonte','source'],temperatura:['temperatura','temp','temperature'],estagio:['estágio','estagio','stage','fase']};
+    const idx = {};
+    Object.entries(map).forEach(([k,aliases])=>{ const i=headers.findIndex(h=>aliases.includes(h)); if(i>-1) idx[k]=i; });
+    importedLeads = [];
+    for (let i=1;i<lines.length;i++) {
+      const cols = lines[i].split(/[,;]/).map(c=>c.trim().replace(/^["']|["']$/g,''));
+      if (!cols[idx.nome||0]) continue;
+      const rawTemp = (cols[idx.temperatura]||'').toLowerCase();
+      const temp = rawTemp.includes('quente')||rawTemp.includes('hot')?'quente':rawTemp.includes('morno')||rawTemp.includes('warm')?'morno':'frio';
+      const rawStage = (cols[idx.estagio]||'').toLowerCase();
+      const stage = ['qualificado','proposta','negociacao','fechado','perdido'].find(s=>rawStage.includes(s))||'lead';
+      importedLeads.push({ id:Date.now()+i, name:cols[idx.nome||0]||'', company:cols[idx.empresa]||'', email:cols[idx.email]||'', phone:cols[idx.telefone]||'', value:cols[idx.valor]?parseFloat(cols[idx.valor].replace(/[^\d.]/g,''))||0:0, origin:cols[idx.origem]||'outro', temp, stage, urgency:'media', budget:'nao', createdAt:Date.now(), updatedAt:Date.now() });
+    }
+    document.getElementById('import-count').textContent = `${importedLeads.length} leads encontrados para importar`;
+    document.getElementById('import-table-wrap').innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--surface2)"><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text3)">Nome</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text3)">Empresa</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text3)">Temp</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text3)">Valor</th></tr></thead>
+      <tbody>${importedLeads.slice(0,8).map(l=>`<tr><td style="padding:6px 10px;font-size:12px">${l.name}</td><td style="padding:6px 10px;font-size:12px;color:var(--text2)">${l.company||'—'}</td><td style="padding:6px 10px;font-size:11px">${l.temp}</td><td style="padding:6px 10px;font-size:12px;color:var(--accent)">${l.value?fmtMoneyFull(l.value):'—'}</td></tr>`).join('')}${importedLeads.length>8?`<tr><td colspan="4" style="padding:6px 10px;font-size:11px;color:var(--text3)">...e mais ${importedLeads.length-8} leads</td></tr>`:''}</tbody>
+    </table>`;
+    document.getElementById('import-preview').style.display='block';
+    document.getElementById('import-confirm-btn').style.display='inline-flex';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function confirmImport() {
+  if (!importedLeads.length) return;
+  leads.push(...importedLeads);
+  save(); renderAll();
+  closeImportModal();
+  showToast(`${importedLeads.length} leads importados ✓`);
+  importedLeads=[];
+}
+
+function downloadTemplate() {
+  const csv = 'Nome,Empresa,Email,Telefone,Valor,Origem,Temperatura,Estágio\nJoão Silva,Acme Ltda,joao@acme.com,(11) 99999-0000,5000,instagram,quente,lead\nMaria Santos,Tech Ltda,maria@tech.com,(21) 98888-1111,12000,indicacao,morno,qualificado\n';
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='modelo_importacao_aprimore.csv'; a.click();
+  showToast('Modelo baixado ✓');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
