@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SalesCRM Pro</title>
+<title>APRIMORE - CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -250,7 +250,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   <aside class="sidebar">
     <div class="logo">
       <div class="logo-icon">⚡</div>
-      <div class="logo-txt">Sales<span>CRM</span></div>
+      <div class="logo-txt">APRIMORE<span> CRM</span></div>
     </div>
     <nav class="nav">
       <div class="nav-group">
@@ -360,6 +360,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
       <!-- RELATÓRIOS -->
       <div id="sec-relatorios" class="section">
+        <!-- Abas de período -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="setReportPeriod('diario',this)">📅 Diário</button>
+            <button class="filter-tab" onclick="setReportPeriod('semanal',this)">📆 Semanal</button>
+            <button class="filter-tab" onclick="setReportPeriod('mensal',this)">🗓️ Mensal</button>
+            <button class="filter-tab" onclick="setReportPeriod('geral',this)">📊 Geral</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="downloadCSV()">⬇️ Excel / CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadPDF()">⬇️ PDF</button>
+          </div>
+        </div>
+        <div id="report-period-label" style="font-size:12px;color:var(--text3);margin-bottom:16px"></div>
+        <!-- Stats do período -->
+        <div id="report-stats" class="stats-grid" style="margin-bottom:18px"></div>
         <div class="reports-grid">
           <div class="card">
             <div class="card-header"><div class="card-title">📊 Funil de conversão</div></div>
@@ -372,6 +388,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div class="card" style="grid-column:1/-1">
             <div class="card-header"><div class="card-title">📅 Distribuição por origem</div></div>
             <div id="origin-chart" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+          </div>
+          <div class="card" style="grid-column:1/-1">
+            <div class="card-header"><div class="card-title">📋 Leads do período</div></div>
+            <div id="report-leads-table"></div>
+          </div>
+          <div class="card" style="grid-column:1/-1">
+            <div class="card-header"><div class="card-title">🗒️ Atividades do período</div></div>
+            <div id="report-activities-table"></div>
           </div>
         </div>
       </div>
@@ -677,36 +701,83 @@ function renderAlerts() {
 }
 
 // ─── REPORTS ──────────────────────────────────────────────────────────────────
+let reportPeriod = 'diario';
+
+function setReportPeriod(p, btn) {
+  reportPeriod = p;
+  document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderReports();
+}
+
+function getPeriodRange() {
+  const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if (reportPeriod==='diario') {
+    return { start: today.getTime(), label: 'Hoje · '+today.toLocaleDateString('pt-BR') };
+  } else if (reportPeriod==='semanal') {
+    const d = new Date(today); d.setDate(d.getDate()-6);
+    return { start: d.getTime(), label: 'Últimos 7 dias · '+d.toLocaleDateString('pt-BR')+' até hoje' };
+  } else if (reportPeriod==='mensal') {
+    const d = new Date(today); d.setDate(d.getDate()-29);
+    return { start: d.getTime(), label: 'Últimos 30 dias · '+d.toLocaleDateString('pt-BR')+' até hoje' };
+  }
+  return { start: 0, label: 'Todo o período' };
+}
+
+function filterByPeriod(list, tsField) {
+  const { start } = getPeriodRange();
+  if (start === 0) return list;
+  return list.filter(x => (x[tsField]||x.createdAt||0) >= start);
+}
+
 function renderReports() {
+  const { label } = getPeriodRange();
+  document.getElementById('report-period-label').textContent = '📌 Período: '+label;
+
+  const pLeads = filterByPeriod(leads, 'createdAt');
+  const pActs  = filterByPeriod(activities, 'id');
+
+  // Stats do período
+  const pFechados = pLeads.filter(l=>l.stage==='fechado');
+  const pRec = pFechados.reduce((s,l)=>s+(+l.value||0),0);
+  const pPipe = pLeads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+  const pConv = pLeads.length ? (pFechados.length/pLeads.length*100).toFixed(1) : 0;
+  document.getElementById('report-stats').innerHTML = `
+    <div class="stat-card green"><div class="stat-label">Novos leads</div><div class="stat-val green">${pLeads.length}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Receita fechada</div><div class="stat-val orange">${fmtMoney(pRec)}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Pipeline gerado</div><div class="stat-val blue">${fmtMoney(pPipe)}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Conversão</div><div class="stat-val purple">${pConv}%</div></div>
+    <div class="stat-card"><div class="stat-label">Atividades</div><div class="stat-val" style="color:var(--yellow)">${pActs.length}</div></div>`;
+
+  // Funil
   const pipeStages = ['lead','qualificado','proposta','negociacao','fechado'];
   const colors2 = ['#3d8ef8','#a855f7','#ff7b35','#ffcc00','#00e5a0'];
-  const maxCount = Math.max(1, ...pipeStages.map(s=>leads.filter(l=>l.stage===s).length));
+  const maxCount = Math.max(1, ...pipeStages.map(s=>pLeads.filter(l=>l.stage===s).length));
   document.getElementById('funnel-chart').innerHTML = pipeStages.map((s,i)=>{
-    const count = leads.filter(l=>l.stage===s).length;
+    const count = pLeads.filter(l=>l.stage===s).length;
     const pct = Math.round(count/maxCount*100);
     return `<div class="funnel-row">
       <div class="funnel-label">${STAGE_LBL[s]}</div>
-      <div class="funnel-track"><div class="funnel-fill" style="width:${pct}%;background:${colors2[i]}">${count>0?count:''}</div></div>
+      <div class="funnel-track"><div class="funnel-fill" style="width:${Math.max(pct,count>0?8:0)}%;background:${colors2[i]}">${count>0?count:''}</div></div>
       <div class="funnel-num">${count}</div>
     </div>`;
   }).join('');
 
-  const fechados = leads.filter(l=>l.stage==='fechado');
-  const perdidos = leads.filter(l=>l.stage==='perdido');
-  const rec = fechados.reduce((s,l)=>s+(+l.value||0),0);
-  const pipe = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
-  const ticket = fechados.length ? Math.round(rec/fechados.length) : 0;
-  const conv = leads.length ? (fechados.length/leads.length*100).toFixed(1) : 0;
+  // Financeiro
+  const perdidos = pLeads.filter(l=>l.stage==='perdido');
+  const ticket = pFechados.length ? Math.round(pRec/pFechados.length) : 0;
   document.getElementById('financial-metrics').innerHTML = [
-    ['Receita total fechada', fmtMoneyFull(rec), '#00e5a0'],
-    ['Pipeline em aberto', fmtMoneyFull(pipe), '#3d8ef8'],
+    ['Receita fechada no período', fmtMoneyFull(pRec), '#00e5a0'],
+    ['Pipeline em aberto', fmtMoneyFull(pPipe), '#3d8ef8'],
     ['Ticket médio', fmtMoneyFull(ticket), '#ffcc00'],
-    ['Taxa de conversão', conv+'%', '#a855f7'],
+    ['Taxa de conversão', pConv+'%', '#a855f7'],
     ['Leads perdidos', perdidos.length, '#ff4757'],
+    ['Total de atividades', pActs.length, '#8a92a8'],
   ].map(([k,v,c])=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2);font-size:13px">${k}</span><span style="font-weight:700;color:${c}">${v}</span></div>`).join('');
 
+  // Origem
   const origins = {};
-  leads.forEach(l=>{ if(l.origin) origins[l.origin]=(origins[l.origin]||0)+1; });
+  pLeads.forEach(l=>{ if(l.origin) origins[l.origin]=(origins[l.origin]||0)+1; });
   document.getElementById('origin-chart').innerHTML = Object.entries(origins).length
     ? Object.entries(origins).sort((a,b)=>b[1]-a[1]).map(([o,n])=>`
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px 18px;text-align:center">
@@ -715,6 +786,155 @@ function renderReports() {
           <div style="font-size:11px;color:var(--text3);text-transform:capitalize">${o}</div>
         </div>`).join('')
     : '<div style="color:var(--text3);font-size:13px;padding:20px">Dados insuficientes</div>';
+
+  // Tabela de leads do período
+  const rlt = document.getElementById('report-leads-table');
+  if (!pLeads.length) { rlt.innerHTML='<div class="empty"><div class="empty-sub">Nenhum lead neste período</div></div>'; }
+  else rlt.innerHTML=`<table class="leads-table" style="font-size:12px">
+    <thead><tr><th>Nome</th><th>Empresa</th><th>Temperatura</th><th>Estágio</th><th>Valor</th><th>Origem</th><th>Cadastrado</th></tr></thead>
+    <tbody>${pLeads.map(l=>`<tr>
+      <td style="font-weight:500">${l.name}</td>
+      <td style="color:var(--text2)">${l.company||'—'}</td>
+      <td><span class="temp-badge temp-${l.temp}" style="font-size:10px">${TEMP_LBL[l.temp]||l.temp}</span></td>
+      <td><span class="stage-badge stage-${l.stage}" style="font-size:10px">${STAGE_LBL[l.stage]||l.stage}</span></td>
+      <td style="color:var(--accent);font-weight:600">${l.value?fmtMoneyFull(+l.value):'—'}</td>
+      <td style="color:var(--text2)">${l.origin||'—'}</td>
+      <td style="color:var(--text3)">${l.createdAt?new Date(l.createdAt).toLocaleDateString('pt-BR'):'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+
+  // Tabela de atividades do período
+  const rat = document.getElementById('report-activities-table');
+  if (!pActs.length) { rat.innerHTML='<div class="empty"><div class="empty-sub">Nenhuma atividade neste período</div></div>'; }
+  else rat.innerHTML=`<table class="leads-table" style="font-size:12px">
+    <thead><tr><th>Tipo</th><th>Título</th><th>Detalhe</th><th>Data/Hora</th></tr></thead>
+    <tbody>${pActs.map(a=>`<tr>
+      <td>${ACT_ICONS[a.type]||'📌'} <span style="color:var(--text2)">${a.type||'—'}</span></td>
+      <td style="font-weight:500">${a.title}</td>
+      <td style="color:var(--text2)">${a.meta||'—'}</td>
+      <td style="color:var(--text3)">${a.time||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ─── DOWNLOAD CSV ─────────────────────────────────────────────────────────────
+function downloadCSV() {
+  const { label } = getPeriodRange();
+  const pLeads = filterByPeriod(leads, 'createdAt');
+  const pActs  = filterByPeriod(activities, 'id');
+  const periodNames = {diario:'Diario',semanal:'Semanal',mensal:'Mensal',geral:'Geral'};
+
+  let csv = 'RELATÓRIO CRM · '+label+'\n\n';
+  csv += 'LEADS\n';
+  csv += 'Nome,Empresa,Email,Telefone,Temperatura,Estágio,Valor,Origem,Urgência,Score,Cadastrado\n';
+  pLeads.forEach(l=>{
+    csv += [l.name,l.company||'',l.email||'',l.phone||'',l.temp,STAGE_LBL[l.stage]||l.stage,l.value||0,l.origin||'',l.urgency||'',scoreOf(l),l.createdAt?new Date(l.createdAt).toLocaleDateString('pt-BR'):''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')+'\n';
+  });
+
+  csv += '\nATIVIDADES\n';
+  csv += 'Tipo,Título,Detalhe,Data\n';
+  pActs.forEach(a=>{
+    csv += [a.type||'',a.title,a.meta||'',a.time||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')+'\n';
+  });
+
+  const pFechados = pLeads.filter(l=>l.stage==='fechado');
+  const pRec = pFechados.reduce((s,l)=>s+(+l.value||0),0);
+  const pPipe = pLeads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+  csv += '\nRESUMO FINANCEIRO\n';
+  csv += 'Métrica,Valor\n';
+  csv += '"Receita fechada","'+fmtMoneyFull(pRec)+'"\n';
+  csv += '"Pipeline em aberto","'+fmtMoneyFull(pPipe)+'"\n';
+  csv += '"Total de leads","'+pLeads.length+'"\n';
+  csv += '"Total de atividades","'+pActs.length+'"\n';
+
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='CRM_Relatorio_'+periodNames[reportPeriod]+'_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV baixado ✓');
+}
+
+// ─── DOWNLOAD PDF ─────────────────────────────────────────────────────────────
+function downloadPDF() {
+  const { label } = getPeriodRange();
+  const pLeads = filterByPeriod(leads, 'createdAt');
+  const pActs  = filterByPeriod(activities, 'id');
+  const pFechados = pLeads.filter(l=>l.stage==='fechado');
+  const pRec = pFechados.reduce((s,l)=>s+(+l.value||0),0);
+  const pPipe = pLeads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+  const pConv = pLeads.length ? (pFechados.length/pLeads.length*100).toFixed(1) : 0;
+  const ticket = pFechados.length ? Math.round(pRec/pFechados.length) : 0;
+  const periodNames = {diario:'Diário',semanal:'Semanal',mensal:'Mensal',geral:'Geral'};
+
+  const stageCount = {};
+  ['lead','qualificado','proposta','negociacao','fechado','perdido'].forEach(s=>{ stageCount[s]=pLeads.filter(l=>l.stage===s).length; });
+  const origins = {};
+  pLeads.forEach(l=>{ if(l.origin) origins[l.origin]=(origins[l.origin]||0)+1; });
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+  <title>Relatório CRM</title>
+  <style>
+    body{font-family:'Segoe UI',sans-serif;font-size:13px;color:#1a1a2e;margin:0;padding:32px;background:#fff}
+    h1{font-size:22px;color:#0a0d12;margin-bottom:4px}
+    .sub{color:#666;font-size:12px;margin-bottom:24px}
+    .badge{display:inline-block;background:#00e5a0;color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:10px;vertical-align:middle}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+    .stat{background:#f4f6fb;border-radius:10px;padding:14px 16px;text-align:center}
+    .stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    .stat-v{font-size:20px;font-weight:700}
+    table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px}
+    th{background:#f4f6fb;padding:8px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#555}
+    td{padding:8px 10px;border-bottom:1px solid #eee}
+    tr:hover td{background:#fafbff}
+    h2{font-size:15px;font-weight:700;margin:24px 0 12px;color:#0a0d12;border-left:4px solid #00e5a0;padding-left:10px}
+    .metric-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:13px}
+    .origin-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+    .origin-chip{background:#f4f6fb;border-radius:8px;padding:10px 16px;text-align:center;min-width:80px}
+    .footer{margin-top:32px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:16px}
+    @media print{body{padding:16px}}
+  </style></head><body>
+  <h1>Relatório CRM <span class="badge">${periodNames[reportPeriod]}</span></h1>
+  <div class="sub">📌 ${label} · Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+
+  <h2>Resumo do período</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Novos leads</div><div class="stat-v" style="color:#1d9e75">${pLeads.length}</div></div>
+    <div class="stat"><div class="stat-lbl">Receita fechada</div><div class="stat-v" style="color:#ff7b35">${fmtMoneyFull(pRec)}</div></div>
+    <div class="stat"><div class="stat-lbl">Pipeline</div><div class="stat-v" style="color:#3d8ef8">${fmtMoneyFull(pPipe)}</div></div>
+    <div class="stat"><div class="stat-lbl">Conversão</div><div class="stat-v" style="color:#a855f7">${pConv}%</div></div>
+    <div class="stat"><div class="stat-lbl">Atividades</div><div class="stat-v" style="color:#ffcc00">${pActs.length}</div></div>
+  </div>
+
+  <h2>Métricas financeiras</h2>
+  ${[['Receita total fechada',fmtMoneyFull(pRec)],['Pipeline em aberto',fmtMoneyFull(pPipe)],['Ticket médio',fmtMoneyFull(ticket)],['Taxa de conversão',pConv+'%'],['Leads fechados',pFechados.length],['Leads perdidos',pLeads.filter(l=>l.stage==='perdido').length]].map(([k,v])=>`<div class="metric-row"><span style="color:#555">${k}</span><strong>${v}</strong></div>`).join('')}
+
+  <h2>Funil de conversão</h2>
+  <table><thead><tr><th>Estágio</th><th>Qtd. de leads</th></tr></thead><tbody>
+  ${['lead','qualificado','proposta','negociacao','fechado','perdido'].map(s=>`<tr><td>${STAGE_LBL[s]}</td><td><strong>${stageCount[s]||0}</strong></td></tr>`).join('')}
+  </tbody></table>
+
+  <h2>Origem dos leads</h2>
+  <div class="origin-grid">${Object.entries(origins).sort((a,b)=>b[1]-a[1]).map(([o,n])=>`<div class="origin-chip"><div style="font-size:18px">${{indicacao:'🤝',instagram:'📸',google:'🔍',whatsapp:'💬',email:'✉️',evento:'🎪',outro:'📌'}[o]||'📌'}</div><strong>${n}</strong><div style="font-size:10px;color:#888;margin-top:2px;text-transform:capitalize">${o}</div></div>`).join('')||'<span style="color:#aaa;font-size:12px">Sem dados</span>'}</div>
+
+  <h2>Leads do período (${pLeads.length})</h2>
+  ${pLeads.length?`<table><thead><tr><th>Nome</th><th>Empresa</th><th>Temperatura</th><th>Estágio</th><th>Valor</th><th>Origem</th></tr></thead><tbody>
+  ${pLeads.map(l=>`<tr><td>${l.name}</td><td>${l.company||'—'}</td><td>${TEMP_LBL[l.temp]||l.temp}</td><td>${STAGE_LBL[l.stage]||l.stage}</td><td>${l.value?fmtMoneyFull(+l.value):'—'}</td><td>${l.origin||'—'}</td></tr>`).join('')}
+  </tbody></table>`:'<p style="color:#aaa;font-size:12px">Nenhum lead neste período.</p>'}
+
+  <h2>Atividades do período (${pActs.length})</h2>
+  ${pActs.length?`<table><thead><tr><th>Tipo</th><th>Título</th><th>Detalhe</th><th>Data</th></tr></thead><tbody>
+  ${pActs.map(a=>`<tr><td>${a.type||'—'}</td><td>${a.title}</td><td>${a.meta||'—'}</td><td>${a.time||'—'}</td></tr>`).join('')}
+  </tbody></table>`:'<p style="color:#aaa;font-size:12px">Nenhuma atividade neste período.</p>'}
+
+  <div class="footer">APRIMORE CRM · Relatório gerado automaticamente · ${new Date().toLocaleString('pt-BR')}</div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  showToast('PDF abrindo para impressão ✓');
 }
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
