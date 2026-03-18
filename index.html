@@ -557,26 +557,54 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
       <!-- VENDEDOR X -->
       <div id="sec-vendedor_x" class="section">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-          <div style="background:#a855f720;border:1px solid #a855f740;border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px">
-            <span style="font-size:20px">🎯</span>
-            <div><div style="font-size:13px;font-weight:600;color:#c084fc">Vendedor X</div><div style="font-size:11px;color:var(--text3)" id="vx-count-label">0 leads</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="background:#a855f720;border:1px solid #a855f740;border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">🎯</span>
+              <div><div style="font-size:13px;font-weight:600;color:#c084fc">Vendedor X</div><div style="font-size:11px;color:var(--text3)" id="vx-count-label">0 leads</div></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openModalProduto('vendedor_x')">+ Novo Lead</button>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openModalProduto('vendedor_x')">+ Novo Lead Vendedor X</button>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <div class="filter-tabs">
+              <button class="filter-tab active" onclick="setProdutoFilter('vx','hoje',this)">Hoje</button>
+              <button class="filter-tab" onclick="setProdutoFilter('vx','ontem',this)">Ontem</button>
+              <button class="filter-tab" onclick="setProdutoFilter('vx','semana',this)">Semana</button>
+              <button class="filter-tab" onclick="setProdutoFilter('vx','mes',this)">Mês</button>
+              <button class="filter-tab" onclick="setProdutoFilter('vx','todos',this)">Todos</button>
+            </div>
+            <input type="date" id="vx-date-picker" class="form-input" style="width:140px;padding:6px 10px;font-size:12px" onchange="setProdutoFilterDate('vx',this.value)" title="Selecionar dia específico">
+          </div>
         </div>
+        <div id="vx-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
+        <div id="vx-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
         <div class="pipeline-board" id="vx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="vx-table-wrap"></div></div>
       </div>
 
       <!-- LÍDER X -->
       <div id="sec-lider_x" class="section">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-          <div style="background:#ffcc0020;border:1px solid #ffcc0040;border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px">
-            <span style="font-size:20px">👑</span>
-            <div><div style="font-size:13px;font-weight:600;color:#ffd740">Líder X</div><div style="font-size:11px;color:var(--text3)" id="lx-count-label">0 leads</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="background:#ffcc0020;border:1px solid #ffcc0040;border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">👑</span>
+              <div><div style="font-size:13px;font-weight:600;color:#ffd740">Líder X</div><div style="font-size:11px;color:var(--text3)" id="lx-count-label">0 leads</div></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openModalProduto('lider_x')">+ Novo Lead</button>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openModalProduto('lider_x')">+ Novo Lead Líder X</button>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <div class="filter-tabs">
+              <button class="filter-tab active" onclick="setProdutoFilter('lx','hoje',this)">Hoje</button>
+              <button class="filter-tab" onclick="setProdutoFilter('lx','ontem',this)">Ontem</button>
+              <button class="filter-tab" onclick="setProdutoFilter('lx','semana',this)">Semana</button>
+              <button class="filter-tab" onclick="setProdutoFilter('lx','mes',this)">Mês</button>
+              <button class="filter-tab" onclick="setProdutoFilter('lx','todos',this)">Todos</button>
+            </div>
+            <input type="date" id="lx-date-picker" class="form-input" style="width:140px;padding:6px 10px;font-size:12px" onchange="setProdutoFilterDate('lx',this.value)" title="Selecionar dia específico">
+          </div>
         </div>
+        <div id="lx-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
+        <div id="lx-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
         <div class="pipeline-board" id="lx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="lx-table-wrap"></div></div>
       </div>
@@ -941,12 +969,12 @@ function renderAll() {
   if (currentSection === 'dashboard') renderDashboard();
   else if (currentSection === 'leads') renderLeadsTable();
   else if (currentSection === 'vendedor_x') {
-    renderProdutoPipeline('vendedor_x','vx-pipeline-board');
-    renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label');
+    renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx');
+    renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx');
   }
   else if (currentSection === 'lider_x') {
-    renderProdutoPipeline('lider_x','lx-pipeline-board');
-    renderProdutoTable('lider_x','lx-table-wrap','lx-count-label');
+    renderProdutoPipeline('lider_x','lx-pipeline-board','lx');
+    renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx');
   }
   else if (currentSection === 'pipeline') renderPipeline();
   else if (currentSection === 'atividades') renderActivities();
@@ -1156,8 +1184,8 @@ function filterByOrigin(v) { filterOrigin = v; renderLeadsTable(); }
 function globalSearch(v) {
   searchQ = v;
   if(currentSection==='leads') renderLeadsTable();
-  else if(currentSection==='vendedor_x') renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label');
-  else if(currentSection==='lider_x') renderProdutoTable('lider_x','lx-table-wrap','lx-count-label');
+  else if(currentSection==='vendedor_x') renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx');
+  else if(currentSection==='lider_x') renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx');
 }
 
 // ─── PIPELINE (DRAG & DROP) ───────────────────────────────────────────────────
@@ -1856,8 +1884,106 @@ function filterActivityLeads(q) {
 }
 
 // ─── PRODUTO SECTIONS ─────────────────────────────────────────────────────────
-function renderProdutoPipeline(produto, boardId) {
+// ─── PRODUTO DATE FILTERS ────────────────────────────────────────────────────
+let vxFilter = 'hoje', lxFilter = 'hoje';
+let vxCustomDate = '', lxCustomDate = '';
+
+function setProdutoFilter(prefix, period, btn) {
+  if (prefix==='vx') { vxFilter=period; vxCustomDate=''; document.getElementById('vx-date-picker').value=''; }
+  else { lxFilter=period; lxCustomDate=''; document.getElementById('lx-date-picker').value=''; }
+  // Update active tab
+  const tabs = btn.closest('.filter-tabs').querySelectorAll('.filter-tab');
+  tabs.forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function setProdutoFilterDate(prefix, dateVal) {
+  if (!dateVal) return;
+  if (prefix==='vx') { vxFilter='custom'; vxCustomDate=dateVal; }
+  else { lxFilter='custom'; lxCustomDate=dateVal; }
+  // Deactivate all tabs
+  const tabs = document.querySelectorAll(`#sec-${prefix==='vx'?'vendedor_x':'lider_x'} .filter-tab`);
+  tabs.forEach(t=>t.classList.remove('active'));
+  renderAll();
+}
+
+function getProdutoFilterRange(prefix) {
+  const filter = prefix==='vx'?vxFilter:lxFilter;
+  const customDate = prefix==='vx'?vxCustomDate:lxCustomDate;
+  const now = new Date();
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+
+  if (filter==='custom' && customDate) {
+    const d = new Date(customDate+'T00:00:00');
+    const dEnd = new Date(customDate+'T23:59:59');
+    return { start:d.getTime(), end:dEnd.getTime(), label:'📅 '+d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'}) };
+  }
+  if (filter==='hoje') {
+    return { start:today.getTime(), end:Date.now(), label:'📅 Hoje — '+today.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) };
+  }
+  if (filter==='ontem') {
+    const ontem = new Date(today); ontem.setDate(ontem.getDate()-1);
+    const ontemFim = new Date(today.getTime()-1);
+    return { start:ontem.getTime(), end:ontemFim.getTime(), label:'📅 Ontem — '+ontem.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'}) };
+  }
+  if (filter==='semana') {
+    const inicio = new Date(today); inicio.setDate(inicio.getDate()-6);
+    return { start:inicio.getTime(), end:Date.now(), label:'📅 Últimos 7 dias' };
+  }
+  if (filter==='mes') {
+    const inicio = new Date(now.getFullYear(),now.getMonth(),1);
+    return { start:inicio.getTime(), end:Date.now(), label:'📅 Este mês — '+inicio.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) };
+  }
+  return { start:0, end:Date.now(), label:'📅 Todos os leads' };
+}
+
+function getProdutoLeads(produto, prefix) {
+  const { start, end } = getProdutoFilterRange(prefix);
+  return leads.filter(l => {
+    const isProduto = l.produto===produto || (produto==='vendedor_x'&&!l.produto);
+    if (!isProduto) return false;
+    if (start===0) return true;
+    const ts = l.createdAt||0;
+    return ts>=start && ts<=end;
+  });
+}
+
+function renderProdutoPipeline(produto, boardId, prefix) {
   const board = document.getElementById(boardId);
+  if (!board) return;
+  const filteredLeads = getProdutoLeads(produto, prefix);
+  const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
+  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',follow_up:'#ff7b35',qualificado:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',fechado:'#00e5a0'};
+  board.innerHTML = pipeStages.map(stage=>{
+    const sd = filteredLeads.filter(l=>l.stage===stage);
+    const total = sd.reduce((s,l)=>s+(+l.value||0),0);
+    const col = colors[stage];
+    return `<div class="pipe-col col-${stage}" ondragover="pipeDragOver(event,'${stage}')" ondragleave="pipeDragLeave(event)" ondrop="pipeDrop(event,'${stage}')">
+      <div class="pipe-col-header" style="background:${col}15;border:1px solid ${col}30">
+        <div><div class="pipe-col-title" style="color:${col}">${STAGE_LBL[stage]}</div>
+        <div class="pipe-col-total" style="color:${col};font-size:10px">${total?fmtMoneyFull(total):''}</div></div>
+        <span class="pipe-col-count" style="background:${col}25;color:${col}">${sd.length}</span>
+      </div>
+      <div class="pipe-col-drop">
+        ${sd.length?sd.map(l=>{
+          const dias = daysSince(l.updatedAt||l.createdAt);
+          const diasColor = dias>7?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
+          const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00c97a;font-size:11px;text-decoration:none">💬</a>`:'';
+          return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})" style="border-left:3px solid ${l.temp==='quente'?'#ff4757':l.temp==='morno'?'#ffcc00':'#3d8ef8'}">
+            <div class="pipe-card-title">${l.name} ${wlink}</div>
+            <div class="pipe-card-company">${l.company||''}</div>
+            ${l.value?`<div class="pipe-card-value">${fmtMoneyFull(+l.value)}</div>`:''}
+            <div class="pipe-card-meta">
+              <span class="pipe-card-days" style="color:${diasColor}">${dias}d</span>
+              <span class="pipe-card-prob" style="background:${scoreColor(STAGE_PROB[stage]||0)}20;color:${scoreColor(STAGE_PROB[stage]||0)}">${STAGE_PROB[stage]||0}%</span>
+            </div>
+          </div>`;
+        }).join(''):`<div style="padding:12px;text-align:center;color:var(--text3);font-size:11px">vazio</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
   if (!board) return;
   const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
   const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',follow_up:'#ff7b35',qualificado:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',fechado:'#00e5a0'};
@@ -1891,9 +2017,32 @@ function renderProdutoPipeline(produto, boardId) {
   }).join('');
 }
 
-function renderProdutoTable(produto, wrapId, labelId) {
-  let list = leads.filter(l => l.produto === produto || (produto === 'vendedor_x' && !l.produto));
+function renderProdutoTable(produto, wrapId, labelId, prefix) {
+  const { label } = getProdutoFilterRange(prefix||( produto==='vendedor_x'?'vx':'lx'));
+  const pfx = prefix||(produto==='vendedor_x'?'vx':'lx');
+  let list = getProdutoLeads(produto, pfx);
   if (searchQ) list = list.filter(l=>(l.name+' '+(l.company||'')).toLowerCase().includes(searchQ.toLowerCase()));
+
+  // Period label
+  const plEl = document.getElementById(pfx+'-period-label');
+  if (plEl) plEl.textContent = label + ' · ' + list.length + ' leads encontrados';
+
+  // Stats row
+  const statsEl = document.getElementById(pfx+'-stats-row');
+  if (statsEl) {
+    const fechados = list.filter(l=>l.stage==='fechado');
+    const rec = fechados.reduce((s,l)=>s+(+l.value||0),0);
+    const quentes = list.filter(l=>l.temp==='quente').length;
+    const pipe = list.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+    statsEl.innerHTML = [
+      ['Leads',list.length,'#E8590C'],
+      ['🔥 Quentes',quentes,'#ff4757'],
+      ['Pipeline',fmtMoney(pipe),'#3d8ef8'],
+      ['Fechados',fechados.length,'#00c97a'],
+      ['Receita',fmtMoney(rec),'#ffcc00'],
+    ].map(([k,v,c])=>`<div style="background:var(--surface2);border-radius:var(--r);padding:10px 14px"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${k}</div><div style="font-size:18px;font-weight:700;color:${c}">${v}</div></div>`).join('');
+  }
+
   if (labelId) document.getElementById(labelId).textContent = list.length + ' leads';
   const wrap = document.getElementById(wrapId);
   if (!list.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">'+(produto==='vendedor_x'?'🎯':'👑')+'</div><div class="empty-title">Nenhum lead aqui ainda</div><div class="empty-sub">Clique em "+ Novo Lead" para adicionar</div></div>'; return; }
