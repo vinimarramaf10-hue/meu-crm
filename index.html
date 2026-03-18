@@ -352,20 +352,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
-<div class="loading-screen hide" id="loading-screen" style="display:none">
-  <div class="loading-logo">
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="60" height="60">
-      <rect x="27" y="27" width="18" height="18" fill="#E8590C" rx="3"/>
-      <path d="M8 16 Q8 8 16 8 L22 8 Q26 8 26 12 L26 16 Q26 20 22 20 L20 20 L20 22 Q20 26 16 26 L12 26 Q8 26 8 22 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M64 16 Q64 8 56 8 L50 8 Q46 8 46 12 L46 16 Q46 20 50 20 L52 20 L52 22 Q52 26 56 26 L60 26 Q64 26 64 22 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M8 56 Q8 64 16 64 L22 64 Q26 64 26 60 L26 56 Q26 52 22 52 L20 52 L20 50 Q20 46 16 46 L12 46 Q8 46 8 50 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M64 56 Q64 64 56 64 L50 64 Q46 64 46 60 L46 56 Q46 52 50 52 L52 52 L52 50 Q52 46 56 46 L60 46 Q64 46 64 50 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
-    </svg>
-  </div>
-  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
-  <div class="loading-txt" id="loading-txt">Carregando...</div>
-</div>
+<!-- LOGIN SCREEN -->
 
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:#111111;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:24px">
   <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
@@ -761,20 +748,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 const ALLOWED_EMAILS = [];
 let realtimeUnsubs = [];
 
-function setLoadingTxt(t) { const el=document.getElementById('loading-txt'); if(el) el.textContent=t; }
-function showLoading(txt) {
-  const el = document.getElementById('loading-screen');
-  if(el){ el.style.display='flex'; el.classList.remove('hide'); setLoadingTxt(txt||'Carregando...'); }
-}
-function hideLoading() {
-  const el = document.getElementById('loading-screen');
-  if(el){ el.classList.add('hide'); setTimeout(()=>{ el.style.display='none'; },400); }
-}
-
 function loginGoogle() {
-  showLoading('Autenticando...');
   auth.signInWithPopup(provider).catch(e => {
-    hideLoading();
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('login-error').textContent = 'Erro ao fazer login: ' + e.message;
   });
@@ -790,30 +765,21 @@ auth.onAuthStateChanged(user => {
   if (user) {
     if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
       auth.signOut();
-      hideLoading();
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('app').style.display = 'none';
       document.getElementById('login-error').style.display = 'block';
       return;
     }
-    showLoading('Carregando dados...');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     const syncEl = document.getElementById('sync-txt');
     if (syncEl) syncEl.innerHTML = `<span class="sync-live"><span class="sync-live-dot"></span>${user.displayName||user.email}</span>`;
     init();
   } else {
-    hideLoading();
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
   }
 });
-
-// Segurança: esconde loading após 5 segundos no máximo
-setTimeout(() => {
-  const ls = document.getElementById('loading-screen');
-  if (ls && !ls.classList.contains('hide')) hideLoading();
-}, 5000);
 
 // ─── FIREBASE STORAGE + REALTIME ──────────────────────────────────────────────
 async function save() {
@@ -2311,12 +2277,11 @@ function editMeta() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-  setLoadingTxt('Carregando dados...');
+  setSyncTxt('Carregando...');
   await loadData();
   await loadMastData();
   await loadMeta();
   setupRealtime();
-  hideLoading();
   renderAll();
 }
 </script>
