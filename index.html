@@ -404,7 +404,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="nav-group">
         <div class="nav-group-label">Principal</div>
         <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">☀️</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
-        <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+        <div class="nav-item-wrap">
+          <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+          <div class="nav-submenu">
+            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-nba')">Follow-ups</button>
+            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-revenue-chart')">Receita por produto</button>
+            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-comparativo')">Comparativo semanal</button>
+            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-previsao')">Previsão de receita</button>
+          </div>
+        </div>
         <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
         <button class="nav-item" onclick="goTo('vendedor_x',this)"><span class="nav-icon">🎯</span><span>Vendedor X</span><span class="badge" id="nav-vx-badge">0</span></button>
         <button class="nav-item" onclick="goTo('lider_x',this)"><span class="nav-icon">👑</span><span>Líder X</span><span class="badge" id="nav-lx-badge">0</span></button>
@@ -1332,11 +1340,28 @@ function actSchedLabel(a) {
 }
 
 function actHTML(a, showActions) {
+  const hasSchedule = a.schedDate || a.schedTime;
+  const schedStr = a.schedDate ? new Date(a.schedDate+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}) : '';
+  const timeStr = a.schedTime || '';
+  const now = new Date();
+  let schedColor = 'var(--text3)';
+  let schedBg = 'transparent';
+  if (a.schedDate) {
+    const sched = new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
+    const diff = sched - now;
+    if (diff < 0) { schedColor = '#ff4757'; schedBg = '#ff475715'; }
+    else if (diff < 7200000) { schedColor = '#ff7b35'; schedBg = '#ff7b3515'; }
+    else if (diff < 86400000) { schedColor = '#ffcc00'; schedBg = '#ffcc0015'; }
+  }
   return `<div class="act-item">
     <div class="act-icon-wrap" style="background:${ACT_COLORS[a.type]||'#ffffff10'}">${ACT_ICONS[a.type]||'📌'}</div>
     <div class="act-body">
-      <div class="act-title">${a.title}${actSchedLabel(a)}</div>
-      <div class="act-meta">${a.meta||''}${a.schedDate?` · 📅 ${a.schedDate}${a.schedTime?' às '+a.schedTime:''}`:''}</div>
+      <div class="act-title">${a.title}</div>
+      <div class="act-meta">${a.meta||''}</div>
+      ${hasSchedule ? `<div style="display:inline-flex;align-items:center;gap:5px;margin-top:5px;background:${schedBg};border-radius:6px;padding:${schedBg!=='transparent'?'2px 7px':'0'}">
+        <span style="font-size:11px;color:${schedColor};font-weight:500">🕐 ${schedStr}${schedStr&&timeStr?' · ':''}${timeStr}</span>
+        ${schedBg!=='transparent'&&diff<0?`<span style="font-size:10px;color:#ff4757">atrasada</span>`:''}
+      </div>` : ''}
       <div style="font-size:11px;color:var(--text3);margin-top:2px">${a.time||''}</div>
     </div>
     ${showActions!==false?`<div style="display:flex;gap:5px;flex-shrink:0">
@@ -1349,7 +1374,19 @@ function actHTML(a, showActions) {
 function renderActivities() {
   const el = document.getElementById('activities-full');
   if (!activities.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma atividade</div><div class="empty-sub">Registre ligações, e-mails e reuniões</div></div>'; return; }
-  el.innerHTML = activities.map(a=>actHTML(a,true)).join('');
+  // Sort: scheduled first (by date/time), then unscheduled by registration time
+  const sorted = [...activities].sort((a,b) => {
+    const hasA = a.schedDate, hasB = b.schedDate;
+    if (hasA && hasB) {
+      const da = new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
+      const db = new Date(b.schedDate+'T'+(b.schedTime||'00:00'));
+      return da - db;
+    }
+    if (hasA) return -1;
+    if (hasB) return 1;
+    return (b.id||0) - (a.id||0);
+  });
+  el.innerHTML = sorted.map(a=>actHTML(a,true)).join('');
 }
 
 // ─── ALERTS ───────────────────────────────────────────────────────────────────
@@ -2094,7 +2131,16 @@ function goTo(name, btn) {
   renderAll();
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+function scrollToDash(id) {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Highlight briefly
+    el.style.outline = '2px solid var(--accent)';
+    el.style.borderRadius = 'var(--r2)';
+    setTimeout(() => { el.style.outline = ''; }, 1500);
+  }, 100);
+}
 function showToast(msg, color) {
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;
