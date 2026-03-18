@@ -8,18 +8,18 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0d12;--surface:#111520;--surface2:#161c2b;--surface3:#1c2336;
+  --bg:#111111;--surface:#1a1a1a;--surface2:#222222;--surface3:#2a2a2a;
   --border:#ffffff0f;--border2:#ffffff18;
   --text:#f0f2f7;--text2:#8a92a8;--text3:#4a5068;
-  --accent:#00e5a0;--accent2:#00b87d;--accent-glow:#00e5a020;
+  --accent:#E8590C;--accent2:#c44a08;--accent-glow:#E8590C20;
   --blue:#3d8ef8;--blue-light:#1a3a6e;
-  --orange:#ff7b35;--orange-light:#3d2010;
+  --orange:#E8590C;--orange-light:#2a1500;
   --red:#ff4757;--red-light:#3d1018;
   --yellow:#ffcc00;--yellow-light:#3d3000;
   --purple:#a855f7;--purple-light:#2d1a4a;
   --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
   --r:10px;--r2:14px;--r3:20px;
-  --shadow:0 4px 24px #00000040;
+  --shadow:0 4px 24px #00000060;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden}
 
@@ -36,8 +36,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .content{flex:1;overflow-y:auto;padding:24px}
 
 /* SIDEBAR */
-.logo{padding:20px 18px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
-.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo{padding:16px 14px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.logo-icon{width:36px;height:36px;flex-shrink:0}
+.logo-txt{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);letter-spacing:.04em}
+.logo-txt span{color:#E8590C}
 .logo-txt{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)}
 .logo-txt span{color:var(--accent)}
 .nav{padding:12px 10px;flex:1}
@@ -47,11 +49,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:var(--accent-glow);color:var(--accent);font-weight:500}
 .nav-item .badge{margin-left:auto;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.nav-item.active{background:#E8590C18;color:#E8590C;font-weight:500}
+.nav-item .badge{margin-left:auto;background:#E8590C;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
 .nav-item .badge.red{background:var(--red)}
 .nav-icon{font-size:15px;width:18px;text-align:center}
 .sidebar-footer{padding:14px;border-top:1px solid var(--border)}
 .sync-pill{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:12px;color:var(--text2)}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#E8590C;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* TOPBAR */
@@ -63,8 +67,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
 .topbar-right{display:flex;align-items:center;gap:8px}
 .btn{padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
-.btn-primary{background:var(--accent);color:#000}
-.btn-primary:hover{background:var(--accent2)}
+.btn-primary{background:#E8590C;color:#fff}
+.btn-primary:hover{background:#c44a08}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
 .btn-sm{padding:6px 12px;font-size:12px}
@@ -80,7 +84,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .stat-card.purple::before{background:var(--purple)}
 .stat-card.red::before{background:var(--red)}
 .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.stat-val{font-family:var(--font-head);font-size:26px;font-weight:700;line-height:1}
+.stat-val{font-family:var(--font-body);font-size:26px;font-weight:700;line-height:1}
 .stat-val.green{color:var(--accent)}
 .stat-val.blue{color:var(--blue)}
 .stat-val.orange{color:var(--orange)}
@@ -231,7 +235,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
 /* WELCOME */
 .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 20px}
-.welcome-logo{width:72px;height:72px;background:var(--accent);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 24px}
+.welcome-logo{width:72px;height:72px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
 .welcome-title{font-family:var(--font-head);font-size:28px;font-weight:700;margin-bottom:8px}
 .welcome-title span{color:var(--accent)}
 .welcome-sub{font-size:14px;color:var(--text2);margin-bottom:32px;max-width:420px}
@@ -298,7 +302,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-icon">⚡</div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+          <!-- Centro laranja -->
+          <rect x="13.5" y="13.5" width="9" height="9" fill="#E8590C" rx="1.5"/>
+          <!-- Canto superior esquerdo -->
+          <path d="M4 8 Q4 4 8 4 L11 4 Q13 4 13 6 L13 8 Q13 10 11 10 L10 10 L10 11 Q10 13 8 13 L6 13 Q4 13 4 11 Z" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Canto superior direito -->
+          <path d="M32 8 Q32 4 28 4 L25 4 Q23 4 23 6 L23 8 Q23 10 25 10 L26 10 L26 11 Q26 13 28 13 L30 13 Q32 13 32 11 Z" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Canto inferior esquerdo -->
+          <path d="M4 28 Q4 32 8 32 L11 32 Q13 32 13 30 L13 28 Q13 26 11 26 L10 26 L10 25 Q10 23 8 23 L6 23 Q4 23 4 25 Z" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Canto inferior direito -->
+          <path d="M32 28 Q32 32 28 32 L25 32 Q23 32 23 30 L23 28 Q23 26 25 26 L26 26 L26 25 Q26 23 28 23 L30 23 Q32 23 32 25 Z" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div class="logo-txt">APRIMORE<span> CRM</span></div>
     </div>
     <nav class="nav">
@@ -351,7 +368,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div id="sec-dashboard" class="section active">
         <div id="welcome-screen" style="display:none">
           <div class="welcome">
-            <div class="welcome-logo">⚡</div>
+            <div class="welcome-logo">
+              <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="72" height="72">
+                <rect x="27" y="27" width="18" height="18" fill="#E8590C" rx="3"/>
+                <path d="M8 16 Q8 8 16 8 L22 8 Q26 8 26 12 L26 16 Q26 20 22 20 L20 20 L20 22 Q20 26 16 26 L12 26 Q8 26 8 22 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M64 16 Q64 8 56 8 L50 8 Q46 8 46 12 L46 16 Q46 20 50 20 L52 20 L52 22 Q52 26 56 26 L60 26 Q64 26 64 22 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M8 56 Q8 64 16 64 L22 64 Q26 64 26 60 L26 56 Q26 52 22 52 L20 52 L20 50 Q20 46 16 46 L12 46 Q8 46 8 50 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M64 56 Q64 64 56 64 L50 64 Q46 64 46 60 L46 56 Q46 52 50 52 L52 52 L52 50 Q52 46 56 46 L60 46 Q64 46 64 50 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+              </svg>
+            </div>
             <div class="welcome-title">Bem-vindo ao <span>APRIMORE CRM</span></div>
             <div class="welcome-sub">Sua central de gestão de leads e vendas. Comece adicionando seu primeiro lead ou importando uma lista.</div>
             <div class="welcome-actions">
@@ -369,8 +394,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
               <div id="dash-hot-leads"></div>
             </div>
             <div class="card">
-              <div class="card-header"><div class="card-title">⚡ Próximas ações (NBA)</div></div>
-              <div id="dash-nba"></div>
             </div>
             <div class="card">
               <div class="card-header"><div class="card-title">📊 Pipeline por estágio</div></div>
@@ -650,10 +673,24 @@ function daysSince(ts) { return Math.floor((Date.now()-ts)/86400000); }
 
 function nbaFor(lead) {
   const d = daysSince(lead.updatedAt || lead.createdAt);
+  const c = lead.contatos || 0;
+
+  if (lead.stage === 'fechado') return '✅ Negócio fechado!';
+  if (lead.stage === 'perdido') return '♻️ Tentar reativar';
+
+  // Baseado em contatos feitos
+  if (c === 0) return '📞 Fazer primeiro contato';
+  if (c === 1) return '🔁 Fazer 2º contato / follow up';
+  if (c === 2) return '💬 3º contato — tentar WhatsApp';
+  if (c === 3) return '📄 Apresentar proposta';
+  if (c === 4) return '🤝 Negociar e tratar objeções';
+  if (c >= 5 && c <= 7) return '📅 Agendar reunião de fechamento';
+  if (c >= 8) return '⚠️ Muitos contatos — avaliar desistir ou mudar abordagem';
+
+  // Fallback por estágio
   if (lead.stage === 'lead') return '📞 Fazer primeiro contato';
   if (lead.stage === 'primeiro_contato') return '🔁 Iniciar follow up';
   if (lead.stage === 'follow_up' && d > 2) return '🔁 Novo follow up urgente';
-  if (lead.stage === 'follow_up') return '📄 Qualificar e enviar proposta';
   if (lead.stage === 'qualificado') return '📄 Enviar proposta';
   if (lead.stage === 'proposta' && d > 3) return '🔁 Follow-up da proposta';
   if (lead.stage === 'negociacao') return '🤝 Agendar reunião de fechamento';
@@ -744,16 +781,13 @@ function renderDashboard() {
       <div style="font-size:12px;font-weight:700;color:${scoreColor(sc)}">${sc}pts</div>
     </div>`}).join('');
 
-  const nba = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').sort((a,b)=>scoreOf(b)-scoreOf(a)).slice(0,5);
+  const followups = leads.filter(l=>l.followup&&l.stage!=='fechado'&&l.stage!=='perdido').sort((a,b)=>a.followup>b.followup?1:-1).slice(0,5);
   const nbaEl = document.getElementById('dash-nba');
-  if (!nba.length) { nbaEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Adicione leads para ver sugestões</div></div>'; }
-  else nbaEl.innerHTML = nba.map(l=>`
-    <div style="padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between">
-        <span>${l.name}</span>
-        ${l.followup?`<span style="font-size:10px;color:var(--yellow)">📅 ${l.followup}</span>`:''}
-      </div>
-      <div class="nba-chip">${nbaFor(l)}</div>
+  if (!followups.length) { nbaEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Nenhum follow-up agendado</div></div>'; }
+  else nbaEl.innerHTML = followups.map(l=>`
+    <div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:12px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${l.company||''}</div></div>
+      <span style="font-size:11px;color:var(--yellow);font-weight:500">📅 ${new Date(l.followup+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span>
     </div>`).join('');
 
   const pipeStages = ['lead','qualificado','proposta','negociacao','fechado'];
@@ -805,7 +839,7 @@ function renderLeadsTable() {
         <td style="font-weight:600;color:var(--accent)">${l.value?fmtMoneyFull(+l.value):'—'}</td>
         <td style="font-size:11px;color:${l.followup?'var(--yellow)':'var(--text3)'}">${l.followup||'—'}</td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${scoreColor(sc)}"></div></div><span style="font-size:11px;color:${scoreColor(sc)}">${sc}</span></div></td>
-        <td><div class="nba-chip" style="font-size:10px">${nbaFor(l)}</div></td>
+        
         <td onclick="event.stopPropagation()"><div class="action-btns">
           <button class="icon-btn" title="Editar" onclick="editLead(${l.id})">✏️</button>
           <button class="icon-btn" title="Excluir" onclick="deleteLead(${l.id})">🗑️</button>
@@ -857,7 +891,6 @@ function renderPipeline() {
             <span class="pipe-card-prob" style="background:${scoreColor(prob)}20;color:${scoreColor(prob)}">${prob}%</span>
           </div>
           ${l.followup?`<div style="font-size:10px;color:var(--yellow);margin-top:5px">📅 Follow-up: ${l.followup}</div>`:''}
-          <div class="nba-chip" style="margin-top:6px">${nbaFor(l)}</div>
           ${wlink?`<div style="margin-top:6px">${wlink}</div>`:''}
         </div>`;
       }).join(''):`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">vazio</div>`}
@@ -921,7 +954,7 @@ function renderAlerts() {
   leads.forEach(l => {
     const d = daysSince(l.updatedAt||l.createdAt);
     if (l.stage==='fechado'||l.stage==='perdido') return;
-    if (l.temp==='quente' && d>=2) alerts.push({type:'hot',icon:'🔥',title:`Lead quente parado: ${l.name}`,sub:`${d} dias sem atualização · ${nbaFor(l)}`,lead:l});
+    if (l.temp==='quente' && d>=2) alerts.push({type:'hot',icon:'🔥',title:`Lead quente parado: ${l.name}`,sub:`${d} dias sem atualização`,lead:l});
     else if (d>=7) alerts.push({type:'warm',icon:'⚠️',title:`Follow-up urgente: ${l.name}`,sub:`${d} dias sem contato · Risco de perda`,lead:l});
     else if (l.stage==='proposta' && d>=4) alerts.push({type:'info',icon:'📄',title:`Proposta sem resposta: ${l.name}`,sub:`${d} dias aguardando retorno`,lead:l});
   });
@@ -1179,7 +1212,6 @@ function openDetail(id) {
   document.getElementById('detail-name').textContent = l.name;
   const relActs = activities.filter(a=>a.leadId===id).slice(0,8);
   document.getElementById('detail-body').innerHTML = `
-    <div class="nba-box"><div class="nba-label">⚡ Próxima melhor ação</div><div class="nba-text">${nbaFor(l)}</div></div>
     <div class="detail-section">
       <div class="detail-section-title">Perfil do lead</div>
       ${[
@@ -1191,6 +1223,31 @@ function openDetail(id) {
         ['Produto',{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',ambos:'🎯👑 Ambos'}[l.produto]||'—'],
         ['Score',sc+' pts'],
       ].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Contatos realizados</div>
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:12px;color:var(--text2)">💬 Mensagens enviadas</span>
+          <span style="font-size:13px;font-weight:700;color:#6aaffe">${l.mensagens||0}<span style="font-size:11px;color:var(--text3);font-weight:400">/10</span></span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden">
+          <div style="height:100%;border-radius:4px;background:#3d8ef8;width:${(l.mensagens||0)*10}%;transition:width .3s"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:12px;color:var(--text2)">📞 Ligações feitas</span>
+          <span style="font-size:13px;font-weight:700;color:#ff9a5c">${l.ligacoes||0}<span style="font-size:11px;color:var(--text3);font-weight:400">/10</span></span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden">
+          <div style="height:100%;border-radius:4px;background:#ff7b35;width:${(l.ligacoes||0)*10}%;transition:width .3s"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="incrementContato(${id},'mensagens')">+1 💬 Mensagem</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="incrementContato(${id},'ligacoes')">+1 📞 Ligação</button>
+      </div>
     </div>
     ${l.pain?`<div class="detail-section"><div class="detail-section-title">DNA do cliente</div>
       ${[['Dor/problema',l.pain],['Desejo',l.desire||'—'],['Capacidade',l.budget?'Confirmada':'Não verificada']].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val" style="max-width:60%;word-break:break-word">${v}</span></div>`).join('')}
@@ -1207,6 +1264,19 @@ function openDetail(id) {
   document.getElementById('detail-panel').classList.add('open');
 }
 function closeDetail() { document.getElementById('detail-panel').classList.remove('open'); }
+
+function incrementContato(id, tipo) {
+  const idx = leads.findIndex(l=>l.id===id);
+  if (idx === -1) return;
+  const atual = leads[idx][tipo] || 0;
+  if (atual >= 10) { showToast('Máximo de 10 atingido','#ff4757'); return; }
+  leads[idx][tipo] = atual + 1;
+  leads[idx].contatos = (leads[idx].mensagens||0) + (leads[idx].ligacoes||0);
+  leads[idx].updatedAt = Date.now();
+  save();
+  openDetail(id);
+  showToast(`${tipo==='mensagens'?'💬 Mensagem':'📞 Ligação'} registrada (${leads[idx][tipo]}/10) ✓`);
+}
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 let editingId = null;
@@ -1264,13 +1334,20 @@ function leadForm(l) {
   <div class="form-group"><label class="form-label">Dor / problema principal</label><input class="form-input" id="f-pain" value="${l.pain||''}" placeholder="Qual problema ele quer resolver?"></div>
   <div class="form-group"><label class="form-label">Desejo / resultado esperado</label><input class="form-input" id="f-desire" value="${l.desire||''}" placeholder="O que ele quer alcançar?"></div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
-    <div class="form-group"><label class="form-label">📞 Contatos feitos (0-10)</label>
-      <select class="form-select" id="f-contatos">
-        ${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<option value="${n}"${(l.contatos||0)==n?' selected':''}>${n} contato${n!==1?'s':''}</option>`).join('')}
-      </select>
+    <div class="form-group"><label class="form-label">💬 Mensagens enviadas (0-10)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" min="0" max="10" value="${l.mensagens||0}" id="f-mensagens" oninput="document.getElementById('f-mensagens-val').textContent=this.value" style="flex:1">
+        <span id="f-mensagens-val" style="font-size:14px;font-weight:600;color:#3d8ef8;min-width:20px;text-align:center">${l.mensagens||0}</span>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">📞 Ligações feitas (0-10)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" min="0" max="10" value="${l.ligacoes||0}" id="f-ligacoes" oninput="document.getElementById('f-ligacoes-val').textContent=this.value" style="flex:1">
+        <span id="f-ligacoes-val" style="font-size:14px;font-weight:600;color:#ff7b35;min-width:20px;text-align:center">${l.ligacoes||0}</span>
+      </div>
     </div>
   </div>
+  <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
   <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>`;
 }
 
@@ -1296,7 +1373,9 @@ function saveModal() {
       temp:document.getElementById('f-temp').value, stage:document.getElementById('f-stage').value,
       value:document.getElementById('f-value').value, origin:document.getElementById('f-origin').value,
       urgency:document.getElementById('f-urgency').value, budget:'nao',
-      contatos:parseInt(document.getElementById('f-contatos').value)||0,
+      contatos:parseInt(document.getElementById('f-mensagens').value)||0,
+      mensagens:parseInt(document.getElementById('f-mensagens').value)||0,
+      ligacoes:parseInt(document.getElementById('f-ligacoes').value)||0,
       pain:document.getElementById('f-pain').value.trim(), desire:document.getElementById('f-desire').value.trim(),
       notes:document.getElementById('f-notes').value.trim(),
       followup:document.getElementById('f-followup').value,
@@ -1363,7 +1442,7 @@ function renderProdutoTable(produto, wrapId, labelId) {
         <td><span style="font-size:13px;font-weight:700;color:${contatosColor}">${l.contatos||0}</span><span style="font-size:10px;color:var(--text3)">/10</span></td>
         <td style="color:var(--text2);font-size:12px">${l.origin||'—'}</td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${scoreColor(sc)}"></div></div><span style="font-size:11px;color:${scoreColor(sc)}">${sc}</span></div></td>
-        <td><div class="nba-chip" style="font-size:10px">${nbaFor(l)}</div></td>
+        
         <td onclick="event.stopPropagation()"><div class="action-btns">
           <button class="icon-btn" onclick="editLead(${l.id})">✏️</button>
           <button class="icon-btn" onclick="deleteLead(${l.id})">🗑️</button>
