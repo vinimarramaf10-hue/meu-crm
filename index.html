@@ -804,7 +804,7 @@ function renderDashboard() {
   const recent = [...activities].slice(0,5);
   const actEl = document.getElementById('dash-activities');
   if (!recent.length) { actEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Nenhuma atividade ainda</div></div>'; }
-  else actEl.innerHTML = recent.map(a=>actHTML(a)).join('');
+  else actEl.innerHTML = recent.map(a=>actHTML(a,false)).join('');
 }
 
 // ─── LEADS TABLE ──────────────────────────────────────────────────────────────
@@ -931,26 +931,63 @@ function pipeDrop(e, stage) {
 
 // ─── ACTIVITIES ───────────────────────────────────────────────────────────────
 const ACT_ICONS = {call:'📞',email:'✉️',meet:'👥',note:'📝',whatsapp:'💬',proposta:'📄'};
-const ACT_COLORS = {call:'#00e5a020',email:'#3d8ef820',meet:'#a855f720',note:'#ff7b3520',whatsapp:'#00e5a020',proposta:'#ff475720'};
+const ACT_COLORS = {call:'#E8590C20',email:'#3d8ef820',meet:'#a855f720',note:'#ff7b3520',whatsapp:'#E8590C20',proposta:'#ff475720'};
 
-function actHTML(a) {
+function actSchedLabel(a) {
+  if (!a.schedDate) return '';
+  const now = new Date();
+  const sched = new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
+  const diff = sched - now;
+  const mins = Math.floor(diff/60000);
+  const hours = Math.floor(diff/3600000);
+  const days = Math.floor(diff/86400000);
+  let label = '', color = '#ffcc00';
+  if (diff < 0) { label = '⚠️ Atrasada'; color = '#ff4757'; }
+  else if (mins < 60) { label = `🔔 Em ${mins}min`; color = '#ff7b35'; }
+  else if (hours < 24) { label = `🕐 Hoje ${a.schedTime||''}`; color = '#ffcc00'; }
+  else { label = `📅 ${new Date(a.schedDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}${a.schedTime?' '+a.schedTime:''}`; color = 'var(--text3)'; }
+  return `<span style="font-size:10px;font-weight:600;color:${color};background:${color}18;padding:2px 7px;border-radius:6px;margin-left:6px">${label}</span>`;
+}
+
+function actHTML(a, showActions) {
   return `<div class="act-item">
     <div class="act-icon-wrap" style="background:${ACT_COLORS[a.type]||'#ffffff10'}">${ACT_ICONS[a.type]||'📌'}</div>
-    <div class="act-body"><div class="act-title">${a.title}</div><div class="act-meta">${a.meta||''}</div></div>
-    <div class="act-time">${a.time||''}</div>
+    <div class="act-body">
+      <div class="act-title">${a.title}${actSchedLabel(a)}</div>
+      <div class="act-meta">${a.meta||''}${a.schedDate?` · 📅 ${a.schedDate}${a.schedTime?' às '+a.schedTime:''}`:''}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${a.time||''}</div>
+    </div>
+    ${showActions!==false?`<div style="display:flex;gap:5px;flex-shrink:0">
+      <button class="icon-btn" onclick="editActivity(${a.id})" title="Editar">✏️</button>
+      <button class="icon-btn" onclick="deleteActivity(${a.id})" title="Excluir">🗑️</button>
+    </div>`:''}
   </div>`;
 }
 
 function renderActivities() {
   const el = document.getElementById('activities-full');
   if (!activities.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma atividade</div><div class="empty-sub">Registre ligações, e-mails e reuniões</div></div>'; return; }
-  el.innerHTML = activities.map(actHTML).join('');
+  el.innerHTML = activities.map(a=>actHTML(a,true)).join('');
 }
 
 // ─── ALERTS ───────────────────────────────────────────────────────────────────
 function renderAlerts() {
   const el = document.getElementById('alerts-list');
   const alerts = [];
+
+  // Atividades agendadas — atrasadas ou para hoje
+  const now = new Date();
+  activities.forEach(a => {
+    if (!a.schedDate) return;
+    const sched = new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
+    const diff = sched - now;
+    const diffH = diff / 3600000;
+    if (diff < 0) alerts.push({type:'hot',icon:'⚠️',title:`Atividade atrasada: ${a.title}`,sub:`Era para ${a.schedDate}${a.schedTime?' às '+a.schedTime:''} · Clique para editar`,actId:a.id});
+    else if (diffH <= 2) alerts.push({type:'warm',icon:'🔔',title:`Atividade em breve: ${a.title}`,sub:`Hoje às ${a.schedTime||a.schedDate} · ${Math.floor(diff/60000)}min restantes`,actId:a.id});
+    else if (diffH <= 24) alerts.push({type:'info',icon:'📅',title:`Atividade hoje: ${a.title}`,sub:`Agendada para ${a.schedTime||'hoje'} · ${a.meta||''}`,actId:a.id});
+  });
+
+  // Alertas de leads
   leads.forEach(l => {
     const d = daysSince(l.updatedAt||l.createdAt);
     if (l.stage==='fechado'||l.stage==='perdido') return;
@@ -958,12 +995,14 @@ function renderAlerts() {
     else if (d>=7) alerts.push({type:'warm',icon:'⚠️',title:`Follow-up urgente: ${l.name}`,sub:`${d} dias sem contato · Risco de perda`,lead:l});
     else if (l.stage==='proposta' && d>=4) alerts.push({type:'info',icon:'📄',title:`Proposta sem resposta: ${l.name}`,sub:`${d} dias aguardando retorno`,lead:l});
   });
+
   if (!alerts.length) { el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Tudo em dia!</div><div class="empty-sub">Nenhum alerta no momento</div></div>'; return; }
   el.innerHTML = alerts.map(a=>`
     <div class="alert-item alert-${a.type==='hot'?'hot':a.type==='warm'?'warm':'info'}">
       <div class="alert-icon">${a.icon}</div>
       <div class="alert-body"><div class="alert-title">${a.title}</div><div class="alert-sub">${a.sub}</div></div>
-      <button class="btn btn-ghost btn-sm" onclick="openDetail(${a.lead.id})">Ver lead</button>
+      ${a.lead?`<button class="btn btn-ghost btn-sm" onclick="openDetail(${a.lead.id})">Ver lead</button>`:''}
+      ${a.actId?`<button class="btn btn-ghost btn-sm" onclick="editActivity(${a.actId})">Ver atividade</button>`:''}
     </div>`).join('');
 }
 
@@ -1280,9 +1319,12 @@ function incrementContato(id, tipo) {
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 let editingId = null;
+let actEditId = null;
+
 function openModal(type, prefillLeadId) {
   currentModal = type;
   editingId = null;
+  actEditId = null;
   if (type === 'lead') {
     document.getElementById('modal-title').innerHTML = '👤 Novo Lead';
     document.getElementById('modal-form').innerHTML = leadForm({});
@@ -1293,6 +1335,21 @@ function openModal(type, prefillLeadId) {
   document.getElementById('modal').classList.add('open');
 }
 function openActivityForLead(lid) { openModal('activity', lid); }
+
+function editActivity(id) {
+  const a = activities.find(x=>x.id===id);
+  if (!a) return;
+  actEditId = id; currentModal = 'activity';
+  document.getElementById('modal-title').innerHTML = '✏️ Editar Atividade';
+  document.getElementById('modal-form').innerHTML = activityForm(a.leadId, a);
+  document.getElementById('modal').classList.add('open');
+}
+
+function deleteActivity(id) {
+  if (!confirm('Excluir esta atividade?')) return;
+  activities = activities.filter(a=>a.id!==id);
+  save(); renderAll(); showToast('Atividade excluída');
+}
 function editLead(id) {
   const l = leads.find(x=>x.id===id);
   if (!l) return;
@@ -1351,16 +1408,29 @@ function leadForm(l) {
   <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>`;
 }
 
-function activityForm(prefillLeadId) {
-  const leadsOpts = leads.map(l=>`<option value="${l.id}"${l.id===prefillLeadId?' selected':''}>${l.name}${l.company?' · '+l.company:''}</option>`).join('');
+function activityForm(prefillLeadId, a) {
+  a = a || {};
+  const leadsOpts = leads.map(l=>`<option value="${l.id}"${(l.id===prefillLeadId||l.id===a.leadId)?' selected':''}>${l.name}${l.company?' · '+l.company:''}</option>`).join('');
   return `<div class="form-group"><label class="form-label">🔍 Buscar lead</label>
     <input class="form-input" id="f-lead-search" placeholder="Digite o nome para filtrar..." oninput="filterActivityLeads(this.value)" style="margin-bottom:6px">
-    <select class="form-select" id="f-lead-id" size="4" style="height:auto"><option value="">— Nenhum —</option>${leadsOpts}</select>
+    <select class="form-select" id="f-lead-id" size="3" style="height:auto"><option value="">— Nenhum —</option>${leadsOpts}</select>
   </div>
   <div class="form-group"><label class="form-label">Tipo</label>
-    <select class="form-select" id="f-atype"><option value="call">📞 Ligação</option><option value="whatsapp">💬 WhatsApp</option><option value="email">✉️ E-mail</option><option value="meet">👥 Reunião</option><option value="proposta">📄 Proposta</option><option value="note">📝 Anotação</option></select></div>
-  <div class="form-group"><label class="form-label">Título / descrição *</label><input class="form-input" id="f-atitle" placeholder="Ex: Ligação de qualificação com João"></div>
-  <div class="form-group"><label class="form-label">Detalhes</label><textarea class="form-textarea" id="f-ameta" placeholder="O que foi discutido, próximos passos..."></textarea></div>`;
+    <select class="form-select" id="f-atype">
+      <option value="call" ${a.type==='call'?'selected':''}>📞 Ligação</option>
+      <option value="whatsapp" ${a.type==='whatsapp'?'selected':''}>💬 WhatsApp</option>
+      <option value="email" ${a.type==='email'?'selected':''}>✉️ E-mail</option>
+      <option value="meet" ${a.type==='meet'?'selected':''}>👥 Reunião</option>
+      <option value="proposta" ${a.type==='proposta'?'selected':''}>📄 Proposta</option>
+      <option value="note" ${a.type==='note'?'selected':''}>📝 Anotação</option>
+    </select>
+  </div>
+  <div class="form-group"><label class="form-label">Título / descrição *</label><input class="form-input" id="f-atitle" value="${a.title||''}" placeholder="Ex: Ligação de qualificação com João"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">📅 Data a cumprir</label><input class="form-input" id="f-adate" type="date" value="${a.schedDate||''}"></div>
+    <div class="form-group"><label class="form-label">🕐 Horário</label><input class="form-input" id="f-atime" type="time" value="${a.schedTime||''}"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Detalhes</label><textarea class="form-textarea" id="f-ameta" placeholder="O que foi discutido, próximos passos...">${a.meta||''}</textarea></div>`;
 }
 
 function saveModal() {
@@ -1394,14 +1464,26 @@ function saveModal() {
     if (!title) { showToast('Informe o título','#ff4757'); return; }
     const lid = document.getElementById('f-lead-id').value;
     const lead = lid ? leads.find(l=>l.id===+lid) : null;
-    activities.unshift({
-      id:Date.now(), leadId:lid?+lid:null,
+    const schedDate = document.getElementById('f-adate').value;
+    const schedTime = document.getElementById('f-atime').value;
+    const actData = {
+      leadId:lid?+lid:null,
       type:document.getElementById('f-atype').value,
-      title, meta:(lead?lead.name+' · ':'')+document.getElementById('f-ameta').value.trim(),
-      time:nowStr()
-    });
+      title,
+      meta:(lead?lead.name+' · ':'')+document.getElementById('f-ameta').value.trim(),
+      schedDate, schedTime,
+      time: actEditId ? activities.find(a=>a.id===actEditId)?.time : nowStr()
+    };
+    if (actEditId) {
+      const idx = activities.findIndex(a=>a.id===actEditId);
+      activities[idx] = {...activities[idx], ...actData};
+      showToast('Atividade atualizada ✓');
+      actEditId = null;
+    } else {
+      activities.unshift({...actData, id:Date.now()});
+      showToast('Atividade registrada ✓');
+    }
     if (lead) { lead.updatedAt = Date.now(); }
-    showToast('Atividade registrada ✓');
   }
   closeModal(); save(); renderAll();
 }
