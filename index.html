@@ -285,10 +285,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 .mast-card:hover .mast-del{opacity:1}
 @media(max-width:768px){
   .sidebar{width:56px}.logo-txt,.nav-group-label,.nav-item span{display:none}
-  .nav-item{justify-content:center}.nav-icon{margin:0}
+  .nav-item{justify-content:center}.nav-icon{margin:0;font-size:18px}
   .reports-grid{grid-template-columns:1fr}
   .detail-panel{width:100%}
+  .topbar{padding:0 12px}
+  .search-input{width:130px;font-size:12px}
+  .content{padding:12px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .pipeline-board{gap:8px}
+  .pipe-col{min-width:155px}
+  .leads-table th:nth-child(5),.leads-table td:nth-child(5),
+  .leads-table th:nth-child(6),.leads-table td:nth-child(6),
+  .leads-table th:nth-child(7),.leads-table td:nth-child(7){display:none}
+  .form-row{grid-template-columns:1fr}
+  .modal{padding:16px;width:96vw}
+  .btn{padding:7px 10px;font-size:12px}
 }
+
+/* REVENUE CHART */
+.rev-chart{display:flex;align-items:flex-end;gap:4px;height:90px;padding-top:8px}
+.rev-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:3px}
+.rev-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s}
+.rev-bar-label{font-size:9px;color:var(--text3);text-align:center;white-space:nowrap}
+.rev-bar-val{font-size:9px;color:var(--text2)}
+
+/* ALERT RESOLVE */
+.alert-item{position:relative}
+.alert-resolve{position:absolute;top:10px;right:10px;background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:2px 8px;transition:all .15s}
+.alert-resolve:hover{background:var(--surface2);color:var(--text)}
 
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 18px;font-size:13px;color:var(--text);z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
@@ -394,10 +418,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
               <div id="dash-hot-leads"></div>
             </div>
             <div class="card">
+              <div class="card-header"><div class="card-title">📅 Próximos follow-ups</div></div>
+              <div id="dash-nba"></div>
             </div>
             <div class="card">
               <div class="card-header"><div class="card-title">📊 Pipeline por estágio</div></div>
               <div class="mini-bar-chart" id="dash-chart"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">💰 Receita por produto</div></div>
+              <div id="dash-revenue-chart"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">⚡ WhatsApp rápido</div></div>
+              <div id="dash-whatsapp"></div>
             </div>
           </div>
           <div class="card">
@@ -479,6 +515,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
       <!-- ALERTAS -->
       <div id="sec-alertas" class="section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:12px;color:var(--text3)">Alertas ativos — clique em ✓ para resolver</div>
+          <button class="btn btn-ghost btn-sm" onclick="resolveAllAlerts()">✓ Resolver todos</button>
+        </div>
         <div class="alerts-list" id="alerts-list"></div>
       </div>
 
@@ -754,11 +794,25 @@ function updateBadges() {
   document.getElementById('nav-leads-badge').textContent = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').length;
   document.getElementById('nav-vx-badge').textContent = leads.filter(l=>l.produto==='vendedor_x'||!l.produto).length;
   document.getElementById('nav-lx-badge').textContent = leads.filter(l=>l.produto==='lider_x').length;
-  const alertCount = leads.filter(l=>{
+  const now = new Date();
+  let alertCount = 0;
+  // activity alerts
+  activities.forEach(a=>{
+    if(!a.schedDate) return;
+    const key='act_'+a.id;
+    if(resolvedAlerts.has(key)) return;
+    const sched=new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
+    if((sched-now)/3600000<=24) alertCount++;
+  });
+  // lead alerts
+  leads.forEach(l=>{
     const d=daysSince(l.updatedAt||l.createdAt);
-    return (l.temp==='quente'&&d>2)||(d>7&&l.stage!=='fechado'&&l.stage!=='perdido');
-  }).length;
-  document.getElementById('nav-alerts-badge').textContent = alertCount;
+    if(l.stage==='fechado'||l.stage==='perdido') return;
+    const key='lead_'+l.id+'_'+d;
+    if(resolvedAlerts.has(key)) return;
+    if((l.temp==='quente'&&d>=2)||d>=7||(l.stage==='proposta'&&d>=4)) alertCount++;
+  });
+  document.getElementById('nav-alerts-badge').textContent = alertCount||'';
   document.getElementById('nav-mast-badge').textContent = prospecoes.length;
 }
 
@@ -801,7 +855,45 @@ function renderDashboard() {
       <div class="mini-bar-label">${{lead:'Lead',qualificado:'Quali.',proposta:'Prop.',negociacao:'Neg.',fechado:'Fecha.'}[s]}</div>
     </div>`).join('');
 
-  const recent = [...activities].slice(0,5);
+  // Revenue by product
+  const vxRec = leads.filter(l=>l.stage==='fechado'&&(l.produto==='vendedor_x'||!l.produto)).reduce((s,l)=>s+(+l.value||0),0);
+  const lxRec = leads.filter(l=>l.stage==='fechado'&&l.produto==='lider_x').reduce((s,l)=>s+(+l.value||0),0);
+  const maxRev = Math.max(vxRec, lxRec, 1);
+  document.getElementById('dash-revenue-chart').innerHTML = `
+    <div style="display:flex;gap:16px;align-items:flex-end;height:90px;padding-top:8px">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:11px;font-weight:600;color:#c084fc">${fmtMoney(vxRec)}</div>
+        <div style="width:100%;border-radius:4px 4px 0 0;background:#a855f7;height:${Math.max(vxRec/maxRev*60,4)}px"></div>
+        <div style="font-size:11px;color:var(--text3)">🎯 Vendedor X</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:11px;font-weight:600;color:#ffd740">${fmtMoney(lxRec)}</div>
+        <div style="width:100%;border-radius:4px 4px 0 0;background:#ffcc00;height:${Math.max(lxRec/maxRev*60,4)}px"></div>
+        <div style="font-size:11px;color:var(--text3)">👑 Líder X</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <div style="background:var(--surface2);border-radius:var(--r);padding:8px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--text3)">Leads VX</div>
+        <div style="font-size:16px;font-weight:700;color:#c084fc">${leads.filter(l=>l.produto==='vendedor_x'||!l.produto).length}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--r);padding:8px 12px;text-align:center">
+        <div style="font-size:10px;color:var(--text3)">Leads LX</div>
+        <div style="font-size:16px;font-weight:700;color:#ffd740">${leads.filter(l=>l.produto==='lider_x').length}</div>
+      </div>
+    </div>`;
+
+  // WhatsApp shortcuts
+  const waLeads = leads.filter(l=>l.phone&&l.stage!=='fechado'&&l.stage!=='perdido').sort((a,b)=>scoreOf(b)-scoreOf(a)).slice(0,5);
+  const waEl = document.getElementById('dash-whatsapp');
+  if (!waLeads.length) { waEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Adicione telefone nos leads para ver aqui</div></div>'; }
+  else waEl.innerHTML = waLeads.map(l=>{
+    const [bg,fg]=avCol(l.name);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${STAGE_LBL[l.stage]||l.stage}</div></div>
+      <a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:500;text-decoration:none;cursor:pointer">💬 WA</a>
+    </div>`}).join('');
   const actEl = document.getElementById('dash-activities');
   if (!recent.length) { actEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-sub">Nenhuma atividade ainda</div></div>'; }
   else actEl.innerHTML = recent.map(a=>actHTML(a,false)).join('');
@@ -857,7 +949,12 @@ function filterLeads(t, btn) {
 }
 function filterByStage(v) { filterStage = v; renderLeadsTable(); }
 function filterByOrigin(v) { filterOrigin = v; renderLeadsTable(); }
-function globalSearch(v) { searchQ = v; if(currentSection==='leads') renderLeadsTable(); }
+function globalSearch(v) {
+  searchQ = v;
+  if(currentSection==='leads') renderLeadsTable();
+  else if(currentSection==='vendedor_x') renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label');
+  else if(currentSection==='lider_x') renderProdutoTable('lider_x','lx-table-wrap','lx-count-label');
+}
 
 // ─── PIPELINE (DRAG & DROP) ───────────────────────────────────────────────────
 let dragLeadId = null;
@@ -882,7 +979,7 @@ function renderPipeline() {
         const dias = daysSince(l.updatedAt||l.createdAt);
         const diasColor = dias>7?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
         const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00e5a0;font-size:11px;text-decoration:none" title="WhatsApp">💬 WhatsApp</a>`:'';
-        return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})">
+        return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})" style="border-left:3px solid ${l.temp==='quente'?'#ff4757':l.temp==='morno'?'#ffcc00':'#3d8ef8'}">
           <div class="pipe-card-title">${l.name}</div>
           <div class="pipe-card-company">${l.company||'Sem empresa'}</div>
           ${l.value?`<div class="pipe-card-value">${fmtMoneyFull(+l.value)}</div>`:''}
@@ -971,38 +1068,59 @@ function renderActivities() {
 }
 
 // ─── ALERTS ───────────────────────────────────────────────────────────────────
+let resolvedAlerts = new Set();
+
+function resolveAlert(key) {
+  resolvedAlerts.add(key);
+  renderAlerts();
+  updateBadges();
+  showToast('Alerta resolvido ✓');
+}
+function resolveAllAlerts() {
+  const el = document.getElementById('alerts-list');
+  el.querySelectorAll('[data-alert-key]').forEach(el=>resolvedAlerts.add(el.dataset.alertKey));
+  renderAlerts(); updateBadges(); showToast('Todos os alertas resolvidos ✓');
+}
+
 function renderAlerts() {
   const el = document.getElementById('alerts-list');
   const alerts = [];
-
-  // Atividades agendadas — atrasadas ou para hoje
   const now = new Date();
+
+  // Atividades agendadas
   activities.forEach(a => {
     if (!a.schedDate) return;
+    const key = 'act_'+a.id;
+    if (resolvedAlerts.has(key)) return;
     const sched = new Date(a.schedDate+'T'+(a.schedTime||'00:00'));
     const diff = sched - now;
     const diffH = diff / 3600000;
-    if (diff < 0) alerts.push({type:'hot',icon:'⚠️',title:`Atividade atrasada: ${a.title}`,sub:`Era para ${a.schedDate}${a.schedTime?' às '+a.schedTime:''} · Clique para editar`,actId:a.id});
-    else if (diffH <= 2) alerts.push({type:'warm',icon:'🔔',title:`Atividade em breve: ${a.title}`,sub:`Hoje às ${a.schedTime||a.schedDate} · ${Math.floor(diff/60000)}min restantes`,actId:a.id});
-    else if (diffH <= 24) alerts.push({type:'info',icon:'📅',title:`Atividade hoje: ${a.title}`,sub:`Agendada para ${a.schedTime||'hoje'} · ${a.meta||''}`,actId:a.id});
+    if (diff < 0) alerts.push({type:'hot',icon:'⚠️',title:`Atividade atrasada: ${a.title}`,sub:`Era para ${a.schedDate}${a.schedTime?' às '+a.schedTime:''}`,actId:a.id,key});
+    else if (diffH <= 2) alerts.push({type:'warm',icon:'🔔',title:`Atividade em breve: ${a.title}`,sub:`Hoje às ${a.schedTime||a.schedDate} · ${Math.floor(diff/60000)}min restantes`,actId:a.id,key});
+    else if (diffH <= 24) alerts.push({type:'info',icon:'📅',title:`Atividade hoje: ${a.title}`,sub:`Agendada para ${a.schedTime||'hoje'} · ${a.meta||''}`,actId:a.id,key});
   });
 
   // Alertas de leads
   leads.forEach(l => {
     const d = daysSince(l.updatedAt||l.createdAt);
     if (l.stage==='fechado'||l.stage==='perdido') return;
-    if (l.temp==='quente' && d>=2) alerts.push({type:'hot',icon:'🔥',title:`Lead quente parado: ${l.name}`,sub:`${d} dias sem atualização`,lead:l});
-    else if (d>=7) alerts.push({type:'warm',icon:'⚠️',title:`Follow-up urgente: ${l.name}`,sub:`${d} dias sem contato · Risco de perda`,lead:l});
-    else if (l.stage==='proposta' && d>=4) alerts.push({type:'info',icon:'📄',title:`Proposta sem resposta: ${l.name}`,sub:`${d} dias aguardando retorno`,lead:l});
+    const key = 'lead_'+l.id+'_'+d;
+    if (resolvedAlerts.has(key)) return;
+    if (l.temp==='quente' && d>=2) alerts.push({type:'hot',icon:'🔥',title:`Lead quente parado: ${l.name}`,sub:`${d} dias sem atualização`,lead:l,key});
+    else if (d>=7) alerts.push({type:'warm',icon:'⚠️',title:`Follow-up urgente: ${l.name}`,sub:`${d} dias sem contato · Risco de perda`,lead:l,key});
+    else if (l.stage==='proposta' && d>=4) alerts.push({type:'info',icon:'📄',title:`Proposta sem resposta: ${l.name}`,sub:`${d} dias aguardando retorno`,lead:l,key});
   });
 
   if (!alerts.length) { el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Tudo em dia!</div><div class="empty-sub">Nenhum alerta no momento</div></div>'; return; }
   el.innerHTML = alerts.map(a=>`
-    <div class="alert-item alert-${a.type==='hot'?'hot':a.type==='warm'?'warm':'info'}">
+    <div class="alert-item alert-${a.type==='hot'?'hot':a.type==='warm'?'warm':'info'}" data-alert-key="${a.key}">
       <div class="alert-icon">${a.icon}</div>
       <div class="alert-body"><div class="alert-title">${a.title}</div><div class="alert-sub">${a.sub}</div></div>
-      ${a.lead?`<button class="btn btn-ghost btn-sm" onclick="openDetail(${a.lead.id})">Ver lead</button>`:''}
-      ${a.actId?`<button class="btn btn-ghost btn-sm" onclick="editActivity(${a.actId})">Ver atividade</button>`:''}
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${a.lead?`<button class="btn btn-ghost btn-sm" onclick="openDetail(${a.lead.id})">Ver</button>`:''}
+        ${a.actId?`<button class="btn btn-ghost btn-sm" onclick="editActivity(${a.actId})">Ver</button>`:''}
+        <button class="alert-resolve" onclick="resolveAlert('${a.key}')">✓ Resolver</button>
+      </div>
     </div>`).join('');
 }
 
@@ -1506,7 +1624,8 @@ function filterActivityLeads(q) {
 
 // ─── PRODUTO SECTIONS ─────────────────────────────────────────────────────────
 function renderProdutoTable(produto, wrapId, labelId) {
-  const list = leads.filter(l => l.produto === produto || (produto === 'vendedor_x' && !l.produto));
+  let list = leads.filter(l => l.produto === produto || (produto === 'vendedor_x' && !l.produto));
+  if (searchQ) list = list.filter(l=>(l.name+' '+(l.company||'')).toLowerCase().includes(searchQ.toLowerCase()));
   if (labelId) document.getElementById(labelId).textContent = list.length + ' leads';
   const wrap = document.getElementById(wrapId);
   if (!list.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">'+(produto==='vendedor_x'?'🎯':'👑')+'</div><div class="empty-title">Nenhum lead aqui ainda</div><div class="empty-sub">Clique em "+ Novo Lead" para adicionar</div></div>'; return; }
