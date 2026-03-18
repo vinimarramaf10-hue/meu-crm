@@ -404,15 +404,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="nav-group">
         <div class="nav-group-label">Principal</div>
         <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">☀️</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
-        <div class="nav-item-wrap">
-          <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
-          <div class="nav-submenu">
-            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-nba')">Follow-ups</button>
-            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-revenue-chart')">Receita por produto</button>
-            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-comparativo')">Comparativo semanal</button>
-            <button class="nav-subitem" onclick="goTo('dashboard',document.querySelector('.nav-item.active'));scrollToDash('dash-previsao')">Previsão de receita</button>
-          </div>
-        </div>
+        <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
         <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
         <button class="nav-item" onclick="goTo('vendedor_x',this)"><span class="nav-icon">🎯</span><span>Vendedor X</span><span class="badge" id="nav-vx-badge">0</span></button>
         <button class="nav-item" onclick="goTo('lider_x',this)"><span class="nav-icon">👑</span><span>Líder X</span><span class="badge" id="nav-lx-badge">0</span></button>
