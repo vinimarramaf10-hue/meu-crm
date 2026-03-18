@@ -564,6 +564,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           </div>
           <button class="btn btn-primary btn-sm" onclick="openModalProduto('vendedor_x')">+ Novo Lead Vendedor X</button>
         </div>
+        <div class="pipeline-board" id="vx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="vx-table-wrap"></div></div>
       </div>
 
@@ -576,6 +577,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           </div>
           <button class="btn btn-primary btn-sm" onclick="openModalProduto('lider_x')">+ Novo Lead Líder X</button>
         </div>
+        <div class="pipeline-board" id="lx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="lx-table-wrap"></div></div>
       </div>
       <div id="sec-pipeline" class="section">
@@ -938,8 +940,14 @@ function renderAll() {
   updateBadges();
   if (currentSection === 'dashboard') renderDashboard();
   else if (currentSection === 'leads') renderLeadsTable();
-  else if (currentSection === 'vendedor_x') renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label');
-  else if (currentSection === 'lider_x') renderProdutoTable('lider_x','lx-table-wrap','lx-count-label');
+  else if (currentSection === 'vendedor_x') {
+    renderProdutoPipeline('vendedor_x','vx-pipeline-board');
+    renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label');
+  }
+  else if (currentSection === 'lider_x') {
+    renderProdutoPipeline('lider_x','lx-pipeline-board');
+    renderProdutoTable('lider_x','lx-table-wrap','lx-count-label');
+  }
   else if (currentSection === 'pipeline') renderPipeline();
   else if (currentSection === 'atividades') renderActivities();
   else if (currentSection === 'alertas') renderAlerts();
@@ -1848,6 +1856,41 @@ function filterActivityLeads(q) {
 }
 
 // ─── PRODUTO SECTIONS ─────────────────────────────────────────────────────────
+function renderProdutoPipeline(produto, boardId) {
+  const board = document.getElementById(boardId);
+  if (!board) return;
+  const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
+  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',follow_up:'#ff7b35',qualificado:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',fechado:'#00e5a0'};
+  board.innerHTML = pipeStages.map(stage=>{
+    const sd = leads.filter(l=>l.stage===stage && (l.produto===produto||(produto==='vendedor_x'&&!l.produto)));
+    const total = sd.reduce((s,l)=>s+(+l.value||0),0);
+    const col = colors[stage];
+    return `<div class="pipe-col col-${stage}" ondragover="pipeDragOver(event,'${stage}')" ondragleave="pipeDragLeave(event)" ondrop="pipeDrop(event,'${stage}')">
+      <div class="pipe-col-header" style="background:${col}15;border:1px solid ${col}30">
+        <div><div class="pipe-col-title" style="color:${col}">${STAGE_LBL[stage]}</div>
+        <div class="pipe-col-total" style="color:${col};font-size:10px">${total?fmtMoneyFull(total):''}</div></div>
+        <span class="pipe-col-count" style="background:${col}25;color:${col}">${sd.length}</span>
+      </div>
+      <div class="pipe-col-drop">
+        ${sd.length?sd.map(l=>{
+          const dias = daysSince(l.updatedAt||l.createdAt);
+          const diasColor = dias>7?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
+          const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00c97a;font-size:11px;text-decoration:none">💬</a>`:'';
+          return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})" style="border-left:3px solid ${l.temp==='quente'?'#ff4757':l.temp==='morno'?'#ffcc00':'#3d8ef8'}">
+            <div class="pipe-card-title">${l.name} ${wlink}</div>
+            <div class="pipe-card-company">${l.company||''}</div>
+            ${l.value?`<div class="pipe-card-value">${fmtMoneyFull(+l.value)}</div>`:''}
+            <div class="pipe-card-meta">
+              <span class="pipe-card-days" style="color:${diasColor}">${dias}d</span>
+              <span class="pipe-card-prob" style="background:${scoreColor(STAGE_PROB[stage]||0)}20;color:${scoreColor(STAGE_PROB[stage]||0)}">${STAGE_PROB[stage]||0}%</span>
+            </div>
+          </div>`;
+        }).join(''):`<div style="padding:12px;text-align:center;color:var(--text3);font-size:11px">vazio</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderProdutoTable(produto, wrapId, labelId) {
   let list = leads.filter(l => l.produto === produto || (produto === 'vendedor_x' && !l.produto));
   if (searchQ) list = list.filter(l=>(l.name+' '+(l.company||'')).toLowerCase().includes(searchQ.toLowerCase()));
