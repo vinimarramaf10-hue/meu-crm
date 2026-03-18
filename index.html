@@ -40,6 +40,13 @@ const provider = new firebase.auth.GoogleAuthProvider();
   --r:10px;--r2:14px;--r3:20px;
   --shadow:0 4px 24px #00000060;
 }
+body.light-mode{
+  --bg:#ffffff;--surface:#fafafa;--surface2:#f4f4f5;--surface3:#ebebeb;
+  --border:#e4e4e7;--border2:#d4d4d8;
+  --text:#09090b;--text2:#71717a;--text3:#a1a1aa;
+  --accent-glow:#E8590C15;--red-light:#fef2f2;--blue-light:#eff6ff;
+  --yellow-light:#fefce8;--purple-light:#faf5ff;--orange-light:#fff7ed;
+}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden}
 
 /* SCROLLBAR */
@@ -396,6 +403,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <nav class="nav">
       <div class="nav-group">
         <div class="nav-group-label">Principal</div>
+        <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">☀️</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
         <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
         <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
         <button class="nav-item" onclick="goTo('vendedor_x',this)"><span class="nav-icon">🎯</span><span>Vendedor X</span><span class="badge" id="nav-vx-badge">0</span></button>
@@ -415,7 +423,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     </nav>
     <div class="sidebar-footer">
       <div class="sync-pill"><div class="sync-dot"></div><span id="sync-txt">Conectando...</span></div>
-      <button onclick="logout()" style="width:100%;margin-top:8px;background:none;border:1px solid var(--border);border-radius:var(--r);padding:7px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body);transition:all .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">↩ Sair da conta</button>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="toggleTheme()" id="theme-btn" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">☀️ Claro</button>
+        <button onclick="logout()" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">↩ Sair</button>
+      </div>
     </div>
   </aside>
 
@@ -439,6 +450,38 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
     <!-- CONTENT -->
     <div class="content">
+
+      <!-- HOJE -->
+      <div id="sec-hoje" class="section">
+        <div style="margin-bottom:18px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px" id="hoje-date"></div>
+          <div style="font-size:16px;font-weight:600">Bom dia! Veja o que precisa de atenção hoje.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📅 Follow-ups de hoje</div></div>
+            <div id="hoje-followups"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🔥 Leads quentes parados</div></div>
+            <div id="hoje-hot-parados"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚠️ Atividades atrasadas</div></div>
+            <div id="hoje-atividades"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Resumo do dia</div></div>
+            <div id="hoje-resumo"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">💡 Cadência sugerida</div></div>
+            <div id="hoje-cadencia"></div>
+          </div>
+        </div>
+      </div>
 
       <!-- DASHBOARD -->
       <div id="sec-dashboard" class="section active">
@@ -489,6 +532,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
                 <button class="btn btn-ghost btn-sm" onclick="editMeta()" id="meta-edit-btn">✏️ Definir meta</button>
               </div>
               <div id="dash-meta"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">📈 Comparativo semanal</div></div>
+              <div id="dash-comparativo"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">🔮 Previsão de receita</div></div>
+              <div id="dash-previsao"></div>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -940,7 +993,8 @@ function scoreColor(s) {
 function renderAll() {
   updateStats();
   updateBadges();
-  if (currentSection === 'dashboard') renderDashboard();
+  if (currentSection === 'hoje') renderHoje();
+  else if (currentSection === 'dashboard') renderDashboard();
   else if (currentSection === 'leads') renderLeadsTable();
   else if (currentSection === 'vendedor_x') {
     renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx');
@@ -1039,6 +1093,10 @@ function renderDashboard() {
       <div class="mini-bar" style="height:${Math.max(counts[i]/maxC*60,counts[i]>0?6:0)}px;background:${colors3[i]}"></div>
       <div class="mini-bar-label">${{lead:'Lead',qualificado:'Quali.',proposta:'Prop.',negociacao:'Neg.',fechado:'Fecha.'}[s]}</div>
     </div>`).join('');
+
+  // Comparativo e previsão
+  renderComparativo();
+  renderPrevisao();
 
   // Revenue by product
   const vxRec = leads.filter(l=>l.stage==='fechado'&&(l.produto==='vendedor_x'||!l.produto)).reduce((s,l)=>s+(+l.value||0),0);
@@ -1725,7 +1783,10 @@ function leadForm(l) {
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Temperatura</label>${sel('f-temp',[['quente','🔥 Quente'],['morno','🟡 Morno'],['frio','❄️ Frio']],l.temp||'morno')}</div>
-    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['follow_up','Follow Up'],['qualificado','Qualificado'],['proposta','Proposta'],['negociacao','Negociação'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')}</div>
+    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['follow_up','Follow Up'],['qualificado','Qualificado'],['proposta','Proposta'],['negociacao','Negociação'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')} </div>
+  </div>
+  <div id="f-motivo-wrap" style="${l.stage==='perdido'?'':'display:none'}">
+    <div class="form-group"><label class="form-label">❌ Motivo da perda</label>${sel('f-motivo',[['preco','Preço alto'],['concorrencia','Concorrência'],['sem_interesse','Sem interesse'],['sem_dinheiro','Sem dinheiro agora'],['timing','Timing errado'],['nao_respondeu','Não respondeu'],['outro','Outro']],l.motivoPerda||'preco')}</div>
   </div>
   <div class="form-group"><label class="form-label">🎯 Produto de interesse</label>${sel('f-produto',[['vendedor_x','🎯 Vendedor X'],['lider_x','👑 Líder X'],['ambos','🎯👑 Ambos']],l.produto||'vendedor_x')}</div>
   <div class="form-row">
@@ -1733,10 +1794,10 @@ function leadForm(l) {
     <div class="form-group"><label class="form-label">Origem</label>${sel('f-origin',[['indicacao','🤝 Indicação'],['instagram','📸 Instagram'],['google','🔍 Google'],['anuncio','📣 Anúncio / Tráfego Pago'],['whatsapp','💬 WhatsApp'],['email','✉️ E-mail'],['evento','🎪 Evento'],['outro','📌 Outro']],l.origin||'outro')}</div>
   </div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">📲 Qtd. de contatos feitos</label>
+    <div class="form-group"><label class="form-label">⏱️ Cadência (dias entre contatos)</label>
       <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" min="0" max="10" value="${l.contatos||0}" id="f-contatos" oninput="document.getElementById('f-contatos-val').textContent=this.value" style="flex:1">
-        <span id="f-contatos-val" style="font-size:14px;font-weight:600;color:var(--accent);min-width:20px;text-align:center">${l.contatos||0}</span>
+        <input type="range" min="1" max="14" value="${l.cadencia||3}" id="f-cadencia" oninput="document.getElementById('f-cadencia-val').textContent=this.value+'d'" style="flex:1">
+        <span id="f-cadencia-val" style="font-size:13px;font-weight:600;color:var(--accent);min-width:28px;text-align:center">${l.cadencia||3}d</span>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Urgência</label>${sel('f-urgency',[['alta','Alta'],['media','Média'],['baixa','Baixa']],l.urgency||'media')}</div>
@@ -1758,7 +1819,8 @@ function leadForm(l) {
     </div>
   </div>
   <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
-  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>`;
+  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>
+  <script>document.getElementById('f-stage').addEventListener('change',function(){document.getElementById('f-motivo-wrap').style.display=this.value==='perdido'?'block':'none';})<\/script>`;
 }
 
 function activityForm(prefillLeadId, a) {
@@ -1803,6 +1865,8 @@ function saveModal() {
       notes:document.getElementById('f-notes').value.trim(),
       followup:document.getElementById('f-followup').value,
       produto:document.getElementById('f-produto').value,
+      cadencia:parseInt(document.getElementById('f-cadencia').value)||3,
+      motivoPerda:document.getElementById('f-motivo')?.value||'',
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
@@ -2023,7 +2087,7 @@ function goTo(name, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
-  const titles = {dashboard:'Dashboard',leads:'Todos os Leads',vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind'};
+  const titles = {hoje:'☀️ Hoje',dashboard:'Dashboard',leads:'Todos os Leads',vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind'};
   document.getElementById('page-title').textContent = titles[name]||name;
   document.getElementById('btn-novo-lead').style.display = name==='mastermind'?'none':'inline-flex';
   document.getElementById('btn-novo-mast').style.display = name==='mastermind'?'inline-flex':'none';
@@ -2243,8 +2307,175 @@ function editMeta() {
   showToast('Meta atualizada ✓');
 }
 
+// ─── TEMA CLARO/ESCURO ────────────────────────────────────────────────────────
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light-mode', !isDark);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = isDark ? '☀️ Claro' : '🌙 Escuro';
+  try { localStorage.setItem('crm_theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+function loadTheme() {
+  try {
+    const t = localStorage.getItem('crm_theme');
+    if (t === 'light') { isDark = false; document.body.classList.add('light-mode'); const btn = document.getElementById('theme-btn'); if(btn) btn.textContent = '🌙 Escuro'; }
+  } catch(e) {}
+}
+
+// ─── HOJE (BRIEFING DIÁRIO) ───────────────────────────────────────────────────
+function renderHoje() {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  const el = document.getElementById('hoje-date');
+  if (el) el.textContent = todayStr.charAt(0).toUpperCase() + todayStr.slice(1);
+
+  // Follow-ups de hoje
+  const today = now.toISOString().split('T')[0];
+  const fups = leads.filter(l => l.followup === today && l.stage !== 'fechado' && l.stage !== 'perdido');
+  const fupEl = document.getElementById('hoje-followups');
+  if (fupEl) {
+    if (!fups.length) fupEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0">Nenhum follow-up agendado para hoje</div>';
+    else fupEl.innerHTML = fups.map(l => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail(${l.id})">
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${STAGE_LBL[l.stage]||l.stage}</div></div>
+        ${l.phone ? `<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="background:#25D366;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;text-decoration:none">WA</a>` : ''}
+      </div>`).join('');
+  }
+
+  // Leads quentes parados
+  const hotParados = leads.filter(l => l.temp === 'quente' && l.stage !== 'fechado' && l.stage !== 'perdido' && daysSince(l.updatedAt||l.createdAt) >= 2).sort((a,b) => daysSince(b.updatedAt||b.createdAt) - daysSince(a.updatedAt||a.createdAt)).slice(0, 5);
+  const hotEl = document.getElementById('hoje-hot-parados');
+  if (hotEl) {
+    if (!hotParados.length) hotEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0">Nenhum lead quente parado</div>';
+    else hotEl.innerHTML = hotParados.map(l => {
+      const d = daysSince(l.updatedAt||l.createdAt);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail(${l.id})">
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--red)">${d} dias sem contato</div></div>
+        ${l.phone ? `<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="background:#25D366;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;text-decoration:none">WA</a>` : ''}
+      </div>`;}).join('');
+  }
+
+  // Atividades atrasadas
+  const atrasadas = activities.filter(a => {
+    if (!a.schedDate) return false;
+    const sched = new Date(a.schedDate + 'T' + (a.schedTime||'23:59'));
+    return sched < now;
+  }).slice(0, 5);
+  const atEl = document.getElementById('hoje-atividades');
+  if (atEl) {
+    if (!atrasadas.length) atEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0">Nenhuma atividade atrasada</div>';
+    else atEl.innerHTML = atrasadas.map(a => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:500">${a.title}</div>
+        <div style="font-size:11px;color:var(--red)">${a.schedDate}${a.schedTime?' '+a.schedTime:''}</div>
+      </div>`).join('');
+  }
+
+  // Resumo do dia
+  const hoje = leads.filter(l => {
+    const ts = l.createdAt || 0;
+    const d = new Date(ts);
+    return d.toISOString().split('T')[0] === today;
+  });
+  const resEl = document.getElementById('hoje-resumo');
+  if (resEl) {
+    const fec = leads.filter(l => l.stage === 'fechado' && new Date(l.updatedAt||0).toISOString().split('T')[0] === today);
+    resEl.innerHTML = [
+      ['Leads cadastrados hoje', hoje.length, 'var(--accent)'],
+      ['Fechamentos hoje', fec.length, '#00c97a'],
+      ['Follow-ups pendentes hoje', fups.length, 'var(--yellow)'],
+      ['Leads quentes parados', hotParados.length, 'var(--red)'],
+      ['Atividades atrasadas', atrasadas.length, 'var(--red)'],
+    ].map(([k,v,c]) => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">${k}</span><span style="font-weight:700;color:${c}">${v}</span></div>`).join('');
+  }
+
+  // Cadência sugerida
+  const cadEl = document.getElementById('hoje-cadencia');
+  if (cadEl) {
+    const sugeridos = leads.filter(l => {
+      if (l.stage === 'fechado' || l.stage === 'perdido') return false;
+      const dias = daysSince(l.updatedAt || l.createdAt);
+      const cad = l.cadencia || 3;
+      return dias >= cad;
+    }).sort((a,b) => {
+      const da = daysSince(a.updatedAt||a.createdAt) - (a.cadencia||3);
+      const db = daysSince(b.updatedAt||b.createdAt) - (b.cadencia||3);
+      return db - da;
+    }).slice(0, 5);
+    if (!sugeridos.length) cadEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0">Todos os leads estão em dia com a cadência</div>';
+    else cadEl.innerHTML = sugeridos.map(l => {
+      const dias = daysSince(l.updatedAt||l.createdAt);
+      const atrasoDias = dias - (l.cadencia||3);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail(${l.id})">
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:${atrasoDias > 2 ? 'var(--red)' : 'var(--yellow)'}">Contatar há ${atrasoDias} dia${atrasoDias!==1?'s':''} (cadência: ${l.cadencia||3}d)</div></div>
+        ${l.phone ? `<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="background:#25D366;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;text-decoration:none">WA</a>` : ''}
+      </div>`;}).join('');
+  }
+
+  // Badge
+  const urgentes = fups.length + hotParados.filter(l => daysSince(l.updatedAt||l.createdAt) >= 3).length + atrasadas.length;
+  const badge = document.getElementById('nav-hoje-badge');
+  if (badge) { badge.textContent = urgentes; badge.style.display = urgentes > 0 ? 'inline' : 'none'; }
+}
+
+// ─── COMPARATIVO SEMANAL ──────────────────────────────────────────────────────
+function renderComparativo() {
+  const el = document.getElementById('dash-comparativo'); if (!el) return;
+  const now = new Date();
+  const semAtual = new Date(now); semAtual.setDate(semAtual.getDate() - 6);
+  const semAnterior = new Date(now); semAnterior.setDate(semAnterior.getDate() - 13);
+  const semAnteriorFim = new Date(now); semAnteriorFim.setDate(semAnteriorFim.getDate() - 7);
+
+  const leadsAtual = leads.filter(l => (l.createdAt||0) >= semAtual.getTime()).length;
+  const leadsAnterior = leads.filter(l => (l.createdAt||0) >= semAnterior.getTime() && (l.createdAt||0) < semAnteriorFim.getTime()).length;
+  const diff = leadsAtual - leadsAnterior;
+  const pct = leadsAnterior > 0 ? Math.round(diff/leadsAnterior*100) : 100;
+
+  const atvsAtual = activities.filter(a => (a.id||0) >= semAtual.getTime()).length;
+  const atvsAnterior = activities.filter(a => (a.id||0) >= semAnterior.getTime() && (a.id||0) < semAnteriorFim.getTime()).length;
+  const diffA = atvsAtual - atvsAnterior;
+
+  const arrow = (n) => n > 0 ? `<span style="color:#00c97a">↑ ${n > 0 ? '+' : ''}${n}</span>` : n < 0 ? `<span style="color:var(--red)">↓ ${n}</span>` : `<span style="color:var(--text3)">= 0</span>`;
+
+  el.innerHTML = [
+    ['Leads esta semana', leadsAtual, arrow(diff)],
+    ['Semana passada', leadsAnterior, ''],
+    ['Variação', `${pct > 0 ? '+' : ''}${pct}%`, ''],
+    ['Atividades esta semana', atvsAtual, arrow(diffA)],
+    ['Semana passada', atvsAnterior, ''],
+  ].map(([k,v,extra]) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">${k}</span><span style="font-weight:500">${v} ${extra||''}</span></div>`).join('');
+}
+
+// ─── PREVISÃO DE RECEITA ──────────────────────────────────────────────────────
+function renderPrevisao() {
+  const el = document.getElementById('dash-previsao'); if (!el) return;
+  const ativos = leads.filter(l => l.stage !== 'fechado' && l.stage !== 'perdido' && l.value);
+  const previsao = ativos.reduce((sum, l) => sum + (+l.value * (STAGE_PROB[l.stage]||0) / 100), 0);
+  const pessimista = ativos.reduce((sum, l) => sum + (+l.value * Math.max((STAGE_PROB[l.stage]||0) - 20, 0) / 100), 0);
+  const otimista = ativos.reduce((sum, l) => sum + (+l.value * Math.min((STAGE_PROB[l.stage]||0) + 20, 100) / 100), 0);
+  const fechados = leads.filter(l => l.stage === 'fechado').reduce((s,l) => s + (+l.value||0), 0);
+  const perdidosMes = leads.filter(l => l.stage === 'perdido').length;
+  const MOTIVO_LBL = {preco:'Preço alto',concorrencia:'Concorrência',sem_interesse:'Sem interesse',sem_dinheiro:'Sem dinheiro',timing:'Timing errado',nao_respondeu:'Não respondeu',outro:'Outro'};
+  const motivos = {};
+  leads.filter(l=>l.stage==='perdido'&&l.motivoPerda).forEach(l=>{ motivos[l.motivoPerda]=(motivos[l.motivoPerda]||0)+1; });
+  const topMotivo = Object.entries(motivos).sort((a,b)=>b[1]-a[1])[0];
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Previsão baseada em probabilidade</div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--text2)">Pessimista</span><span style="color:var(--red)">${fmtMoneyFull(Math.round(pessimista))}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--text2)">Esperado</span><span style="font-weight:600;color:var(--accent)">${fmtMoneyFull(Math.round(previsao))}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--text2)">Otimista</span><span style="color:#00c97a">${fmtMoneyFull(Math.round(otimista))}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--text2)">Já fechado</span><span style="font-weight:600">${fmtMoneyFull(Math.round(fechados))}</span></div>
+    </div>
+    ${topMotivo ? `<div style="font-size:11px;color:var(--text3);margin-top:8px">Principal motivo de perda: <span style="color:var(--red);font-weight:500">${MOTIVO_LBL[topMotivo[0]]||topMotivo[0]} (${topMotivo[1]}x)</span></div>` : ''}`;
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
+  loadTheme();
   setSyncTxt('Carregando...');
   await loadData();
   await loadMastData();
