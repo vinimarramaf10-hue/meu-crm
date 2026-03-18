@@ -353,7 +353,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 <body>
 
 <!-- LOADING SCREEN -->
-<div class="loading-screen" id="loading-screen">
+<div class="loading-screen hide" id="loading-screen" style="display:none">
   <div class="loading-logo">
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="60" height="60">
       <rect x="27" y="27" width="18" height="18" fill="#E8590C" rx="3"/>
@@ -762,15 +762,17 @@ const ALLOWED_EMAILS = [];
 let realtimeUnsubs = [];
 
 function setLoadingTxt(t) { const el=document.getElementById('loading-txt'); if(el) el.textContent=t; }
+function showLoading(txt) {
+  const el = document.getElementById('loading-screen');
+  if(el){ el.style.display='flex'; el.classList.remove('hide'); setLoadingTxt(txt||'Carregando...'); }
+}
 function hideLoading() {
   const el = document.getElementById('loading-screen');
-  if(el){ el.classList.add('hide'); setTimeout(()=>el.style.display='none',400); }
+  if(el){ el.classList.add('hide'); setTimeout(()=>{ el.style.display='none'; },400); }
 }
 
 function loginGoogle() {
-  setLoadingTxt('Autenticando...');
-  document.getElementById('loading-screen').style.display='flex';
-  document.getElementById('loading-screen').classList.remove('hide');
+  showLoading('Autenticando...');
   auth.signInWithPopup(provider).catch(e => {
     hideLoading();
     document.getElementById('login-error').style.display = 'block';
@@ -794,7 +796,7 @@ auth.onAuthStateChanged(user => {
       document.getElementById('login-error').style.display = 'block';
       return;
     }
-    setLoadingTxt('Carregando dados...');
+    showLoading('Carregando dados...');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     const syncEl = document.getElementById('sync-txt');
@@ -806,6 +808,12 @@ auth.onAuthStateChanged(user => {
     document.getElementById('app').style.display = 'none';
   }
 });
+
+// Segurança: esconde loading após 5 segundos no máximo
+setTimeout(() => {
+  const ls = document.getElementById('loading-screen');
+  if (ls && !ls.classList.contains('hide')) hideLoading();
+}, 5000);
 
 // ─── FIREBASE STORAGE + REALTIME ──────────────────────────────────────────────
 async function save() {
