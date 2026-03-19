@@ -352,6 +352,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 /* SYNC PULSE */
 .sync-live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#00c97a;background:#00c97a15;padding:3px 9px;border-radius:10px}
 .sync-live-dot{width:6px;height:6px;border-radius:50%;background:#00c97a;animation:pulse 1.5s infinite}
+/* SUBMENU HOVER */
+.nav-has-sub{position:relative}
+.nav-sub{
+  max-height:0;overflow:hidden;
+  transition:max-height .25s ease, opacity .2s ease;
+  opacity:0;
+}
+.nav-has-sub:hover .nav-sub{max-height:200px;opacity:1}
+.nav-sub-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px 5px 36px;
+  border-radius:var(--r);cursor:pointer;
+  color:var(--text3);font-size:11px;font-weight:500;
+  transition:all .12s;border:none;background:none;
+  width:100%;text-align:left;font-family:var(--font-body);
+}
+.nav-sub-item:hover{color:var(--accent);background:var(--accent-glow)}
+.nav-sub-item::before{content:'';width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0}
+
 .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 18px;font-size:13px;color:var(--text);z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{border-color:var(--accent)50}.toast-dot{width:8px;height:8px;border-radius:50%}
@@ -404,7 +423,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="nav-group">
         <div class="nav-group-label">Principal</div>
         <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">☀️</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
-        <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+        <div class="nav-has-sub">
+          <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+          <div class="nav-sub">
+            <button class="nav-sub-item" onclick="goToDash('dash-nba')">Próximos follow-ups</button>
+            <button class="nav-sub-item" onclick="goToDash('dash-revenue-chart')">Receita por produto</button>
+            <button class="nav-sub-item" onclick="goToDash('dash-comparativo')">Comparativo semanal</button>
+            <button class="nav-sub-item" onclick="goToDash('dash-previsao')">Previsão de receita</button>
+          </div>
+        </div>
         <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
         <button class="nav-item" onclick="goTo('vendedor_x',this)"><span class="nav-icon">🎯</span><span>Vendedor X</span><span class="badge" id="nav-vx-badge">0</span></button>
         <button class="nav-item" onclick="goTo('lider_x',this)"><span class="nav-icon">👑</span><span>Líder X</span><span class="badge" id="nav-lx-badge">0</span></button>
@@ -2121,6 +2148,15 @@ function goTo(name, btn) {
   document.getElementById('btn-novo-lead').style.display = name==='mastermind'?'none':'inline-flex';
   document.getElementById('btn-novo-mast').style.display = name==='mastermind'?'inline-flex':'none';
   renderAll();
+}
+
+function goToDash(id) {
+  // Se não estiver no dashboard, vai primeiro
+  if (currentSection !== 'dashboard') {
+    const btn = document.querySelector('[onclick*="goTo(\'dashboard\'"]');
+    if (btn) goTo('dashboard', btn);
+  }
+  scrollToDash(id);
 }
 
 function scrollToDash(id) {
