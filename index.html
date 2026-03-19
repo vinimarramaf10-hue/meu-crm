@@ -426,15 +426,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div class="nav-has-sub">
           <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
           <div class="nav-sub">
-            <button class="nav-sub-item" onclick="goToDash('dash-nba')">Próximos follow-ups</button>
-            <button class="nav-sub-item" onclick="goToDash('dash-revenue-chart')">Receita por produto</button>
-            <button class="nav-sub-item" onclick="goToDash('dash-comparativo')">Comparativo semanal</button>
-            <button class="nav-sub-item" onclick="goToDash('dash-previsao')">Previsão de receita</button>
+            <button class="nav-sub-item" onclick="goTo('followups',this)">Follow-ups</button>
+            <button class="nav-sub-item" onclick="goTo('receita',this)">Receita por produto</button>
+            <button class="nav-sub-item" onclick="goTo('comparativo',this)">Comparativo semanal</button>
+            <button class="nav-sub-item" onclick="goTo('previsao',this)">Previsão de receita</button>
           </div>
         </div>
         <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
-        <button class="nav-item" onclick="goTo('vendedor_x',this)"><span class="nav-icon">🎯</span><span>Vendedor X</span><span class="badge" id="nav-vx-badge">0</span></button>
-        <button class="nav-item" onclick="goTo('lider_x',this)"><span class="nav-icon">👑</span><span>Líder X</span><span class="badge" id="nav-lx-badge">0</span></button>
+        <div class="nav-has-sub">
+          <button class="nav-item" onclick="goTo('produtos',this)"><span class="nav-icon">📦</span><span>Produtos</span><span class="badge neutral" id="nav-prod-badge">0</span></button>
+          <div class="nav-sub">
+            <button class="nav-sub-item" onclick="goTo('vendedor_x',this)">Vendedor X <span id="nav-vx-badge" style="font-size:10px;color:var(--text3)">0</span></button>
+            <button class="nav-sub-item" onclick="goTo('lider_x',this)">Líder X <span id="nav-lx-badge" style="font-size:10px;color:var(--text3)">0</span></button>
+            <button class="nav-sub-item" onclick="goTo('membership',this)">Membership <span id="nav-mb-badge" style="font-size:10px;color:var(--text3)">0</span></button>
+          </div>
+        </div>
         <button class="nav-item" onclick="goTo('pipeline',this)"><span class="nav-icon">🏆</span><span>Pipeline</span></button>
         <button class="nav-item" onclick="goTo('atividades',this)"><span class="nav-icon">📋</span><span>Atividades</span></button>
       </div>
@@ -584,6 +590,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
       </div>
 
+      <!-- FOLLOW-UPS -->
+      <div id="sec-followups" class="section">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3)">Leads com follow-up agendado ordenados por data</div>
+        </div>
+        <div class="stats-grid" id="fup-stats" style="margin-bottom:16px"></div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="fup-list"></div></div>
+      </div>
+
+      <!-- RECEITA POR PRODUTO -->
+      <div id="sec-receita" class="section">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3)">Receita fechada e pipeline por produto</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 Vendedor X</div></div>
+            <div id="rec-vx"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">👑 Líder X</div></div>
+            <div id="rec-lx"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Comparação visual</div></div>
+          <div id="rec-chart" style="padding:8px 0"></div>
+        </div>
+      </div>
+
+      <!-- COMPARATIVO SEMANAL -->
+      <div id="sec-comparativo" class="section">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3)">Comparativo entre esta semana e a anterior</div>
+        </div>
+        <div id="comp-full"></div>
+      </div>
+
+      <!-- PREVISÃO DE RECEITA -->
+      <div id="sec-previsao" class="section">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3)">Receita esperada baseada nos leads ativos e probabilidade de cada estágio</div>
+        </div>
+        <div id="prev-full"></div>
+      </div>
+
       <!-- LEADS -->
       <div id="sec-leads" class="section">
         <div class="leads-controls">
@@ -623,6 +675,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       </div>
 
       <!-- VENDEDOR X -->
+      <!-- PRODUTOS OVERVIEW -->
+      <div id="sec-produtos" class="section">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Visão geral dos 3 produtos — passe o mouse em Produtos no menu para acessar cada um</div>
+        <div id="prod-overview-stats" class="stats-grid" style="margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="card" style="cursor:pointer;transition:border .15s" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor=''" onclick="goTo('vendedor_x',document.querySelector('.nav-sub-item'))">
+            <div class="card-header"><div class="card-title" style="color:#c084fc">Vendedor X</div></div>
+            <div id="prod-vx-summary"></div>
+          </div>
+          <div class="card" style="cursor:pointer;transition:border .15s" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor=''" onclick="goTo('lider_x',document.querySelector('.nav-sub-item'))">
+            <div class="card-header"><div class="card-title" style="color:#ffd740">Líder X</div></div>
+            <div id="prod-lx-summary"></div>
+          </div>
+          <div class="card" style="cursor:pointer;transition:border .15s" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor=''" onclick="goTo('membership',document.querySelector('.nav-sub-item'))">
+            <div class="card-header"><div class="card-title" style="color:#00e5a0">Membership</div></div>
+            <div id="prod-mb-summary"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="sec-vendedor_x" class="section">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
           <div style="display:flex;align-items:center;gap:12px">
@@ -674,6 +746,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div id="lx-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
         <div class="pipeline-board" id="lx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="lx-table-wrap"></div></div>
+      </div>
+
+      <!-- MEMBERSHIP -->
+      <div id="sec-membership" class="section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="background:#00e5a020;border:1px solid #00e5a040;border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">💎</span>
+              <div><div style="font-size:13px;font-weight:600;color:#00e5a0">Membership</div><div style="font-size:11px;color:var(--text3)" id="mb-count-label">0 leads</div></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openModalProduto('membership')">+ Novo Lead</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <div class="filter-tabs">
+              <button class="filter-tab active" onclick="setProdutoFilter('mb','hoje',this)">Hoje</button>
+              <button class="filter-tab" onclick="setProdutoFilter('mb','ontem',this)">Ontem</button>
+              <button class="filter-tab" onclick="setProdutoFilter('mb','semana',this)">Semana</button>
+              <button class="filter-tab" onclick="setProdutoFilter('mb','mes',this)">Mês</button>
+              <button class="filter-tab" onclick="setProdutoFilter('mb','todos',this)">Todos</button>
+            </div>
+            <input type="date" id="mb-date-picker" class="form-input" style="width:140px;padding:6px 10px;font-size:12px" onchange="setProdutoFilterDate('mb',this.value)">
+          </div>
+        </div>
+        <div id="mb-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
+        <div id="mb-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
+        <div class="pipeline-board" id="mb-pipeline-board" style="margin-bottom:20px"></div>
+        <div class="card" style="padding:0;overflow:hidden"><div id="mb-table-wrap"></div></div>
       </div>
       <div id="sec-pipeline" class="section">
         <div class="pipeline-board" id="pipeline-board"></div>
@@ -1023,19 +1122,19 @@ function renderAll() {
   if (currentSection === 'hoje') renderHoje();
   else if (currentSection === 'dashboard') renderDashboard();
   else if (currentSection === 'leads') renderLeadsTable();
-  else if (currentSection === 'vendedor_x') {
-    renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx');
-    renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx');
-  }
-  else if (currentSection === 'lider_x') {
-    renderProdutoPipeline('lider_x','lx-pipeline-board','lx');
-    renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx');
-  }
+  else if (currentSection === 'produtos') renderProdutosOverview();
+  else if (currentSection === 'vendedor_x') { renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx'); renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx'); }
+  else if (currentSection === 'lider_x') { renderProdutoPipeline('lider_x','lx-pipeline-board','lx'); renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx'); }
+  else if (currentSection === 'membership') { renderProdutoPipeline('membership','mb-pipeline-board','mb'); renderProdutoTable('membership','mb-table-wrap','mb-count-label','mb'); }
   else if (currentSection === 'pipeline') renderPipeline();
   else if (currentSection === 'atividades') renderActivities();
   else if (currentSection === 'alertas') renderAlerts();
   else if (currentSection === 'relatorios') renderReports();
   else if (currentSection === 'mastermind') renderMastermind();
+  else if (currentSection === 'followups') renderFollowups();
+  else if (currentSection === 'receita') renderReceitaProduto();
+  else if (currentSection === 'comparativo') renderComparativoFull();
+  else if (currentSection === 'previsao') renderPrevisaoFull();
 }
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
@@ -1048,6 +1147,7 @@ function updateStats() {
   const hot = leads.filter(l=>l.temp==='quente'&&l.stage!=='fechado'&&l.stage!=='perdido').length;
   const vx = leads.filter(l=>l.produto==='vendedor_x'||!l.produto).length;
   const lx = leads.filter(l=>l.produto==='lider_x').length;
+  const mb = leads.filter(l=>l.produto==='membership').length;
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card green"><div class="stat-label">Total de leads</div><div class="stat-val green">${leads.length}</div><div class="stat-sub">${hot} quentes</div></div>
     <div class="stat-card blue"><div class="stat-label">Pipeline ativo</div><div class="stat-val blue">${fmtMoney(pipe)}</div><div class="stat-sub">em negociação</div></div>
@@ -1058,8 +1158,13 @@ function updateStats() {
 
 function updateBadges() {
   document.getElementById('nav-leads-badge').textContent = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').length;
-  document.getElementById('nav-vx-badge').textContent = leads.filter(l=>l.produto==='vendedor_x'||!l.produto).length;
-  document.getElementById('nav-lx-badge').textContent = leads.filter(l=>l.produto==='lider_x').length;
+  const vxCount = leads.filter(l=>l.produto==='vendedor_x'||!l.produto).length;
+  const lxCount = leads.filter(l=>l.produto==='lider_x').length;
+  const mbCount = leads.filter(l=>l.produto==='membership').length;
+  document.getElementById('nav-vx-badge').textContent = vxCount;
+  document.getElementById('nav-lx-badge').textContent = lxCount;
+  document.getElementById('nav-mb-badge').textContent = mbCount;
+  document.getElementById('nav-prod-badge').textContent = vxCount+lxCount+mbCount;
   const now = new Date();
   let alertCount = 0;
   // activity alerts
@@ -1215,7 +1320,7 @@ function renderLeadsTable() {
       return `<tr onclick="openDetail(${l.id})" style="cursor:pointer">
         <td><div class="lead-name-wrap"><div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
           <div><div class="lead-name">${l.name}${wlink}</div><div class="lead-company">${l.company||'—'}</div>
-          ${l.produto?`<div style="font-size:10px;color:var(--purple);margin-top:2px">${{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',ambos:'🎯👑 Ambos'}[l.produto]||''}</div>`:''}
+          ${l.produto?`<div style="font-size:10px;color:var(--purple);margin-top:2px">${{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',membership:'💎 Membership',ambos:'Ambos'}[l.produto]||''}</div>`:''}
           </div></div></td>
         <td><span class="temp-badge temp-${l.temp}">${TEMP_LBL[l.temp]||l.temp}</span></td>
         <td><span class="stage-badge stage-${l.stage}">${STAGE_LBL[l.stage]||l.stage}</span></td>
@@ -1718,7 +1823,7 @@ function openDetail(id) {
         ['Temperatura',TEMP_LBL[l.temp]||l.temp],['Estágio',STAGE_LBL[l.stage]||l.stage],
         ['Valor',l.value?fmtMoneyFull(+l.value):'—'],['Origem',l.origin||'—'],
         ['Follow-up',l.followup||'—'],['Urgência',l.urgency||'—'],
-        ['Produto',{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',ambos:'🎯👑 Ambos'}[l.produto]||'—'],
+        ['Produto',{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',membership:'💎 Membership',ambos:'Ambos'}[l.produto]||'—'],
         ['Score',sc+' pts'],
       ].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
     </div>
@@ -1844,7 +1949,7 @@ function leadForm(l) {
   <div id="f-motivo-wrap" style="${l.stage==='perdido'?'':'display:none'}">
     <div class="form-group"><label class="form-label">❌ Motivo da perda</label>${sel('f-motivo',[['preco','Preço alto'],['concorrencia','Concorrência'],['sem_interesse','Sem interesse'],['sem_dinheiro','Sem dinheiro agora'],['timing','Timing errado'],['nao_respondeu','Não respondeu'],['outro','Outro']],l.motivoPerda||'preco')}</div>
   </div>
-  <div class="form-group"><label class="form-label">🎯 Produto de interesse</label>${sel('f-produto',[['vendedor_x','🎯 Vendedor X'],['lider_x','👑 Líder X'],['ambos','🎯👑 Ambos']],l.produto||'vendedor_x')}</div>
+  <div class="form-group"><label class="form-label">🎯 Produto de interesse</label>${sel('f-produto',[['vendedor_x','🎯 Vendedor X'],['lider_x','👑 Líder X'],['membership','💎 Membership'],['ambos','Ambos']],l.produto||'vendedor_x')}</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Valor estimado (R$)</label><input class="form-input" id="f-value" type="number" value="${l.value||''}" placeholder="Ex: 5000"></div>
     <div class="form-group"><label class="form-label">Origem</label>${sel('f-origin',[['indicacao','🤝 Indicação'],['instagram','📸 Instagram'],['google','🔍 Google'],['anuncio','📣 Anúncio / Tráfego Pago'],['whatsapp','💬 WhatsApp'],['email','✉️ E-mail'],['evento','🎪 Evento'],['outro','📌 Outro']],l.origin||'outro')}</div>
@@ -1979,12 +2084,13 @@ function filterActivityLeads(q) {
 
 // ─── PRODUTO SECTIONS ─────────────────────────────────────────────────────────
 // ─── PRODUTO DATE FILTERS ────────────────────────────────────────────────────
-let vxFilter = 'hoje', lxFilter = 'hoje';
-let vxCustomDate = '', lxCustomDate = '';
+let vxFilter = 'hoje', lxFilter = 'hoje', mbFilter = 'hoje';
+let vxCustomDate = '', lxCustomDate = '', mbCustomDate = '';
 
 function setProdutoFilter(prefix, period, btn) {
   if (prefix==='vx') { vxFilter=period; vxCustomDate=''; document.getElementById('vx-date-picker').value=''; }
-  else { lxFilter=period; lxCustomDate=''; document.getElementById('lx-date-picker').value=''; }
+  else if (prefix==='lx') { lxFilter=period; lxCustomDate=''; document.getElementById('lx-date-picker').value=''; }
+  else { mbFilter=period; mbCustomDate=''; document.getElementById('mb-date-picker').value=''; }
   // Update active tab
   const tabs = btn.closest('.filter-tabs').querySelectorAll('.filter-tab');
   tabs.forEach(t=>t.classList.remove('active'));
@@ -1995,7 +2101,8 @@ function setProdutoFilter(prefix, period, btn) {
 function setProdutoFilterDate(prefix, dateVal) {
   if (!dateVal) return;
   if (prefix==='vx') { vxFilter='custom'; vxCustomDate=dateVal; }
-  else { lxFilter='custom'; lxCustomDate=dateVal; }
+  else if (prefix==='lx') { lxFilter='custom'; lxCustomDate=dateVal; }
+  else { mbFilter='custom'; mbCustomDate=dateVal; }
   // Deactivate all tabs
   const tabs = document.querySelectorAll(`#sec-${prefix==='vx'?'vendedor_x':'lider_x'} .filter-tab`);
   tabs.forEach(t=>t.classList.remove('active'));
@@ -2003,8 +2110,8 @@ function setProdutoFilterDate(prefix, dateVal) {
 }
 
 function getProdutoFilterRange(prefix) {
-  const filter = prefix==='vx'?vxFilter:lxFilter;
-  const customDate = prefix==='vx'?vxCustomDate:lxCustomDate;
+  const filter = prefix==='vx'?vxFilter:prefix==='lx'?lxFilter:mbFilter;
+  const customDate = prefix==='vx'?vxCustomDate:prefix==='lx'?lxCustomDate:mbCustomDate;
   const now = new Date();
   const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
 
@@ -2035,8 +2142,7 @@ function getProdutoFilterRange(prefix) {
 function getProdutoLeads(produto, prefix) {
   const { start, end } = getProdutoFilterRange(prefix);
   return leads.filter(l => {
-    const isProduto = l.produto===produto || (produto==='vendedor_x'&&!l.produto);
-    if (!isProduto) return false;
+    const isProduto = l.produto===produto || (produto==='vendedor_x'&&!l.produto);    if (!isProduto) return false;
     if (start===0) return true;
     const ts = l.createdAt||0;
     return ts>=start && ts<=end;
@@ -2143,7 +2249,7 @@ function goTo(name, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
-  const titles = {hoje:'☀️ Hoje',dashboard:'Dashboard',leads:'Todos os Leads',vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind'};
+  const titles = {hoje:'☀️ Hoje',dashboard:'Dashboard',leads:'Todos os Leads',produtos:'📦 Produtos',vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',membership:'💎 Membership',pipeline:'Pipeline',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind',followups:'📅 Follow-ups',receita:'💰 Receita por Produto',comparativo:'📈 Comparativo Semanal',previsao:'🔮 Previsão de Receita'};
   document.getElementById('page-title').textContent = titles[name]||name;
   document.getElementById('btn-novo-lead').style.display = name==='mastermind'?'none':'inline-flex';
   document.getElementById('btn-novo-mast').style.display = name==='mastermind'?'inline-flex':'none';
@@ -2547,6 +2653,199 @@ function renderPrevisao() {
 }
 
 // ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
+// ─── PRODUTOS ─────────────────────────────────────────────────────────────────
+function renderProdutosOverview() {
+  const prodSummary = (produto, cor, icon) => {
+    const list = leads.filter(l => l.produto===produto||(produto==='vendedor_x'&&!l.produto));
+    const fechados = list.filter(l=>l.stage==='fechado');
+    const rec = fechados.reduce((s,l)=>s+(+l.value||0),0);
+    const pipe = list.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+    const conv = list.length?(fechados.length/list.length*100).toFixed(1):0;
+    return `<div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${[['Leads',list.length],['Fechados',fechados.length]].map(([k,v])=>`<div style="background:var(--surface2);border-radius:var(--r);padding:10px"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${k}</div><div style="font-size:20px;font-weight:700;color:${cor}">${v}</div></div>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text2)">Receita: <span style="font-weight:600;color:${cor}">${fmtMoneyFull(rec)}</span></div>
+      <div style="font-size:12px;color:var(--text2)">Pipeline: <span style="font-weight:600">${fmtMoneyFull(pipe)}</span></div>
+      <div style="font-size:12px;color:var(--text2)">Conversão: <span style="font-weight:600">${conv}%</span></div>
+    </div>`;
+  };
+  const total = leads.length;
+  const totalRec = leads.filter(l=>l.stage==='fechado').reduce((s,l)=>s+(+l.value||0),0);
+  const totalPipe = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+  document.getElementById('prod-overview-stats').innerHTML = [
+    ['Total de leads', total, 'var(--text)'],
+    ['Receita total', fmtMoneyFull(totalRec), 'var(--accent)'],
+    ['Pipeline total', fmtMoneyFull(totalPipe), 'var(--blue)'],
+  ].map(([k,v,c])=>`<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-val" style="color:${c};font-size:20px">${v}</div></div>`).join('');
+  document.getElementById('prod-vx-summary').innerHTML = prodSummary('vendedor_x','#c084fc','🎯');
+  document.getElementById('prod-lx-summary').innerHTML = prodSummary('lider_x','#ffd740','👑');
+  document.getElementById('prod-mb-summary').innerHTML = prodSummary('membership','#00e5a0','💎');
+}
+
+// ─── SUB-SECTIONS ─────────────────────────────────────────────────────────────
+
+function renderFollowups() {
+  const fups = leads.filter(l=>l.followup&&l.stage!=='fechado'&&l.stage!=='perdido')
+    .sort((a,b)=>a.followup>b.followup?1:-1);
+  const hoje = new Date().toISOString().split('T')[0];
+  const atrasados = fups.filter(l=>l.followup<hoje).length;
+  const hoje_ = fups.filter(l=>l.followup===hoje).length;
+  const futuros = fups.filter(l=>l.followup>hoje).length;
+  document.getElementById('fup-stats').innerHTML=[
+    ['Total agendados',fups.length,'var(--accent)'],
+    ['Atrasados',atrasados,'var(--red)'],
+    ['Hoje',hoje_,'var(--yellow)'],
+    ['Futuros',futuros,'var(--blue)'],
+  ].map(([k,v,c])=>`<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-val" style="color:${c}">${v}</div></div>`).join('');
+  const el=document.getElementById('fup-list');
+  if(!fups.length){el.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Nenhum follow-up agendado</div><div class="empty-sub">Adicione datas de follow-up nos leads</div></div>';return;}
+  el.innerHTML=`<table class="leads-table"><thead><tr><th>Lead</th><th>Empresa</th><th>Produto</th><th>Estágio</th><th>Data Follow-up</th><th>Dias restantes</th></tr></thead><tbody>${fups.map(l=>{
+    const diff=Math.ceil((new Date(l.followup+'T12:00:00')-new Date())/(1000*60*60*24));
+    const cor=diff<0?'var(--red)':diff===0?'var(--yellow)':'var(--text2)';
+    const label=diff<0?`${Math.abs(diff)}d atrasado`:diff===0?'Hoje':diff===1?'Amanhã':`${diff}d`;
+    const[bg,fg]=avCol(l.name);
+    return`<tr onclick="openDetail(${l.id})" style="cursor:pointer">
+      <td><div class="lead-name-wrap"><div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div><div class="lead-name">${l.name}</div></div></td>
+      <td style="color:var(--text2)">${l.company||'—'}</td>
+      <td style="color:var(--text2)">${{vendedor_x:'Vendedor X',lider_x:'Líder X',ambos:'Ambos'}[l.produto]||'—'}</td>
+      <td><span class="stage-badge stage-${l.stage}">${STAGE_LBL[l.stage]||l.stage}</span></td>
+      <td style="font-weight:500;color:${cor}">${new Date(l.followup+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><span style="font-weight:600;color:${cor}">${label}</span></td>
+    </tr>`}).join('')}</tbody></table>`;
+}
+
+function renderReceitaProduto() {
+  const produtoCard = (produto, id_rec, id_pip, cor) => {
+    const isProd = l => l.produto===produto||(produto==='vendedor_x'&&!l.produto);
+    const list = leads.filter(isProd);
+    const fechados = list.filter(l=>l.stage==='fechado');
+    const ativos = list.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido');
+    const rec = fechados.reduce((s,l)=>s+(+l.value||0),0);
+    const pipe = ativos.reduce((s,l)=>s+(+l.value||0),0);
+    const ticket = fechados.length?Math.round(rec/fechados.length):0;
+    const conv = list.length?(fechados.length/list.length*100).toFixed(1):0;
+    return`<div style="display:flex;flex-direction:column;gap:8px">
+      ${[['Total de leads',list.length],['Fechados',fechados.length],['Receita fechada',fmtMoneyFull(rec)],['Pipeline ativo',fmtMoneyFull(pipe)],['Ticket médio',fmtMoneyFull(ticket)],['Taxa de conversão',conv+'%']].map(([k,v])=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text2)">${k}</span>
+          <span style="font-weight:600">${v}</span>
+        </div>`).join('')}
+      <div style="margin-top:8px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Leads por estágio</div>
+        ${['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'].map(s=>{
+          const count=list.filter(l=>l.stage===s).length;
+          const pct=list.length?Math.round(count/list.length*100):0;
+          return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="font-size:11px;color:var(--text3);width:100px;flex-shrink:0">${STAGE_LBL[s]}</div>
+            <div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden"><div style="height:100%;border-radius:3px;background:${cor};width:${pct}%"></div></div>
+            <div style="font-size:11px;color:var(--text2);width:20px;text-align:right">${count}</div>
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+  };
+  document.getElementById('rec-vx').innerHTML = produtoCard('vendedor_x','rec-vx','pip-vx','#a855f7');
+  document.getElementById('rec-lx').innerHTML = produtoCard('lider_x','rec-lx','pip-lx','#ffcc00');
+  const vxRec=leads.filter(l=>(l.produto==='vendedor_x'||!l.produto)&&l.stage==='fechado').reduce((s,l)=>s+(+l.value||0),0);
+  const lxRec=leads.filter(l=>l.produto==='lider_x'&&l.stage==='fechado').reduce((s,l)=>s+(+l.value||0),0);
+  const maxR=Math.max(vxRec,lxRec,1);
+  document.getElementById('rec-chart').innerHTML=`
+    <div style="display:flex;gap:40px;align-items:flex-end;height:120px;padding:10px 20px">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="font-size:14px;font-weight:700;color:#c084fc">${fmtMoneyFull(vxRec)}</div>
+        <div style="width:100%;border-radius:6px 6px 0 0;background:#a855f7;height:${Math.max(vxRec/maxR*80,4)}px;transition:height .5s"></div>
+        <div style="font-size:12px;color:var(--text2)">Vendedor X</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="font-size:14px;font-weight:700;color:#ffd740">${fmtMoneyFull(lxRec)}</div>
+        <div style="width:100%;border-radius:6px 6px 0 0;background:#ffcc00;height:${Math.max(lxRec/maxR*80,4)}px;transition:height .5s"></div>
+        <div style="font-size:12px;color:var(--text2)">Líder X</div>
+      </div>
+    </div>`;
+}
+
+function renderComparativoFull() {
+  const el = document.getElementById('comp-full');
+  const now = new Date();
+  const startThisWeek = new Date(now); startThisWeek.setDate(now.getDate()-6); startThisWeek.setHours(0,0,0,0);
+  const startLastWeek = new Date(startThisWeek); startLastWeek.setDate(startLastWeek.getDate()-7);
+  const endLastWeek = new Date(startThisWeek.getTime()-1);
+  const thisWeek = leads.filter(l=>(l.createdAt||0)>=startThisWeek.getTime());
+  const lastWeek = leads.filter(l=>{const t=l.createdAt||0;return t>=startLastWeek.getTime()&&t<=endLastWeek.getTime();});
+  const metrics = [
+    ['Novos leads',thisWeek.length,lastWeek.length],
+    ['Leads quentes',thisWeek.filter(l=>l.temp==='quente').length,lastWeek.filter(l=>l.temp==='quente').length],
+    ['Fechados',thisWeek.filter(l=>l.stage==='fechado').length,lastWeek.filter(l=>l.stage==='fechado').length],
+    ['Receita',thisWeek.filter(l=>l.stage==='fechado').reduce((s,l)=>s+(+l.value||0),0),lastWeek.filter(l=>l.stage==='fechado').reduce((s,l)=>s+(+l.value||0),0)],
+    ['Vendedor X',thisWeek.filter(l=>l.produto==='vendedor_x'||!l.produto).length,lastWeek.filter(l=>l.produto==='vendedor_x'||!l.produto).length],
+    ['Líder X',thisWeek.filter(l=>l.produto==='lider_x').length,lastWeek.filter(l=>l.produto==='lider_x').length],
+  ];
+  el.innerHTML=`
+    <div class="stats-grid" style="margin-bottom:20px">${metrics.map(([k,a,b])=>{
+      const diff=a-b;const pct=b>0?Math.round((a-b)/b*100):a>0?100:0;
+      const cor=diff>0?'var(--accent)':diff<0?'var(--red)':'var(--text3)';
+      const seta=diff>0?'↑':diff<0?'↓':'—';
+      const isMoney=k==='Receita';
+      return`<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-val" style="color:var(--text)">${isMoney?fmtMoney(a):a}</div><div class="stat-sub" style="color:${cor}">${seta} ${Math.abs(pct)}% vs sem. anterior</div></div>`;
+    }).join('')}</div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Detalhamento</div></div>
+      <table class="leads-table"><thead><tr><th>Métrica</th><th>Esta semana</th><th>Semana anterior</th><th>Variação</th></tr></thead>
+      <tbody>${metrics.map(([k,a,b])=>{
+        const diff=a-b;const pct=b>0?Math.round((a-b)/b*100):a>0?100:0;
+        const cor=diff>0?'var(--accent)':diff<0?'var(--red)':'var(--text3)';
+        const isMoney=k==='Receita';
+        return`<tr><td style="font-weight:500">${k}</td><td>${isMoney?fmtMoneyFull(a):a}</td><td style="color:var(--text2)">${isMoney?fmtMoneyFull(b):b}</td><td style="color:${cor};font-weight:600">${diff>0?'+':''}${isMoney?fmtMoney(diff):diff} (${diff>0?'+':''}${pct}%)</td></tr>`;
+      }).join('')}</tbody></table>
+    </div>`;
+}
+
+function renderPrevisaoFull() {
+  const el = document.getElementById('prev-full');
+  const ativos = leads.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido'&&l.value);
+  const previsao = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100),0);
+  const pessimista = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100*0.6),0);
+  const otimista = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100*1.4),0);
+  const porEstagio = ['qualificado','proposta','negociacao'].map(s=>{
+    const sl=ativos.filter(l=>l.stage===s);
+    const val=sl.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[s]||0)/100),0);
+    return{stage:s,count:sl.length,val,prob:STAGE_PROB[s]};
+  });
+  const motivos={};leads.filter(l=>l.stage==='perdido'&&l.motivoPerda).forEach(l=>{motivos[l.motivoPerda]=(motivos[l.motivoPerda]||0)+1;});
+  const MOTIVO_LBL2={preco:'Preço alto',concorrencia:'Concorrência',sem_interesse:'Sem interesse',sem_dinheiro:'Sem dinheiro',timing:'Timing errado',nao_respondeu:'Não respondeu',outro:'Outro'};
+  el.innerHTML=`
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card blue"><div class="stat-label">Previsão esperada</div><div class="stat-val blue">${fmtMoneyFull(Math.round(previsao))}</div></div>
+      <div class="stat-card"><div class="stat-label">Cenário pessimista</div><div class="stat-val" style="color:var(--red)">${fmtMoneyFull(Math.round(pessimista))}</div></div>
+      <div class="stat-card green"><div class="stat-label">Cenário otimista</div><div class="stat-val green">${fmtMoneyFull(Math.round(otimista))}</div></div>
+      <div class="stat-card"><div class="stat-label">Leads no funil</div><div class="stat-val">${ativos.length}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Por estágio</div></div>
+        ${porEstagio.map(({stage,count,val,prob})=>`
+          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:500">${STAGE_LBL[stage]}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--accent)">${fmtMoneyFull(Math.round(val))}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3)">${count} leads · ${prob}% de probabilidade</div>
+            <div style="background:var(--surface2);border-radius:3px;height:4px;margin-top:6px;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background:var(--accent);width:${prob}%"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Motivos de perda</div></div>
+        ${Object.keys(motivos).length?Object.entries(motivos).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+            <span style="color:var(--text2)">${MOTIVO_LBL2[m]||m}</span>
+            <span style="font-weight:600;color:var(--red)">${n}x</span>
+          </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">Nenhum lead perdido ainda</div>'}
+      </div>
+    </div>`;
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
   loadTheme();
