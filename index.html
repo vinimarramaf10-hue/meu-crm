@@ -717,6 +717,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
         <div id="vx-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
         <div id="vx-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">🎯 Meta mensal — Vendedor X</div>
+            <button class="btn btn-ghost btn-sm" onclick="editMetaProduto('vendedor_x')">✏️ Editar</button>
+          </div>
+          <div id="meta-vx"></div>
+        </div>
         <div class="pipeline-board" id="vx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="vx-table-wrap"></div></div>
       </div>
@@ -744,6 +751,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
         <div id="lx-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
         <div id="lx-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">👑 Meta mensal — Líder X</div>
+            <button class="btn btn-ghost btn-sm" onclick="editMetaProduto('lider_x')">✏️ Editar</button>
+          </div>
+          <div id="meta-lx"></div>
+        </div>
         <div class="pipeline-board" id="lx-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="lx-table-wrap"></div></div>
       </div>
@@ -771,6 +785,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
         <div id="mb-period-label" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
         <div id="mb-stats-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:16px"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">💎 Meta mensal — Membership</div>
+            <button class="btn btn-ghost btn-sm" onclick="editMetaProduto('membership')">✏️ Editar</button>
+          </div>
+          <div id="meta-mb"></div>
+        </div>
         <div class="pipeline-board" id="mb-pipeline-board" style="margin-bottom:20px"></div>
         <div class="card" style="padding:0;overflow:hidden"><div id="mb-table-wrap"></div></div>
       </div>
@@ -1097,16 +1118,35 @@ function nbaFor(lead) {
   return '✅ Manter cadência';
 }
 
+// Peso por origem do lead (indicação converte 3-5x mais)
+const ORIGIN_SCORE = {indicacao:25,evento:15,whatsapp:12,instagram:8,google:8,email:5,anuncio:5,outro:3};
+
 function scoreOf(lead) {
   let s = 0;
-  if (lead.temp === 'quente') s += 40;
-  else if (lead.temp === 'morno') s += 20;
+  // Temperatura (base)
+  if (lead.temp === 'quente') s += 30;
+  else if (lead.temp === 'morno') s += 15;
+  // Estágio
   const si = STAGES.indexOf(lead.stage);
-  s += si * 10;
-  if (lead.budget) s += 10;
-  if (lead.urgency === 'alta') s += 20;
-  else if (lead.urgency === 'media') s += 10;
-  return Math.min(s, 100);
+  s += si * 8;
+  // Urgência
+  if (lead.urgency === 'alta') s += 15;
+  else if (lead.urgency === 'media') s += 7;
+  // Origem (pesquisa mostra que indicação converte 3-5x mais)
+  s += (ORIGIN_SCORE[lead.origin] || 3);
+  // Penalizar por dias sem contato
+  const dias = daysSince(lead.updatedAt || lead.createdAt);
+  if (dias > 7) s -= 15;
+  else if (dias > 3) s -= 7;
+  // Bônus por engajamento (mensagens + ligações)
+  const contatos = (lead.mensagens||0) + (lead.ligacoes||0);
+  if (contatos >= 8) s += 10;
+  else if (contatos >= 4) s += 5;
+  // Penalizar se passou de 6 tentativas (pesquisa mostra queda de 45%)
+  if (contatos > 12) s -= 10;
+  // Bônus se tem valor definido
+  if (lead.value && +lead.value > 0) s += 5;
+  return Math.min(Math.max(s, 0), 100);
 }
 
 function scoreColor(s) {
@@ -1123,9 +1163,9 @@ function renderAll() {
   else if (currentSection === 'dashboard') renderDashboard();
   else if (currentSection === 'leads') renderLeadsTable();
   else if (currentSection === 'produtos') renderProdutosOverview();
-  else if (currentSection === 'vendedor_x') { renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx'); renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx'); }
-  else if (currentSection === 'lider_x') { renderProdutoPipeline('lider_x','lx-pipeline-board','lx'); renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx'); }
-  else if (currentSection === 'membership') { renderProdutoPipeline('membership','mb-pipeline-board','mb'); renderProdutoTable('membership','mb-table-wrap','mb-count-label','mb'); }
+  else if (currentSection === 'vendedor_x') { renderProdutoPipeline('vendedor_x','vx-pipeline-board','vx'); renderProdutoTable('vendedor_x','vx-table-wrap','vx-count-label','vx'); renderMetaProduto('vendedor_x','meta-vx'); }
+  else if (currentSection === 'lider_x') { renderProdutoPipeline('lider_x','lx-pipeline-board','lx'); renderProdutoTable('lider_x','lx-table-wrap','lx-count-label','lx'); renderMetaProduto('lider_x','meta-lx'); }
+  else if (currentSection === 'membership') { renderProdutoPipeline('membership','mb-pipeline-board','mb'); renderProdutoTable('membership','mb-table-wrap','mb-count-label','mb'); renderMetaProduto('membership','meta-mb'); }
   else if (currentSection === 'pipeline') renderPipeline();
   else if (currentSection === 'atividades') renderActivities();
   else if (currentSection === 'alertas') renderAlerts();
@@ -1373,9 +1413,14 @@ function renderPipeline() {
       ${sd.length?sd.map(l=>{
         const prob = STAGE_PROB[stage];
         const dias = daysSince(l.updatedAt||l.createdAt);
-        const diasColor = dias>7?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
+        const isCooling = l.temp==='quente' && dias>=2;
+        const isStale = dias>=7;
+        const diasColor = isStale?'#ff4757':dias>3?'#ffcc00':'var(--text3)';
+        const cardBorder = l.temp==='quente'?'#ff4757':l.temp==='morno'?'#ffcc00':'#3d8ef8';
         const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00e5a0;font-size:11px;text-decoration:none" title="WhatsApp">💬 WhatsApp</a>`:'';
-        return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})" style="border-left:3px solid ${l.temp==='quente'?'#ff4757':l.temp==='morno'?'#ffcc00':'#3d8ef8'}">
+        return `<div class="pipe-card" draggable="true" ondragstart="pipeDragStart(event,${l.id})" ondragend="pipeDragEnd(event)" onclick="openDetail(${l.id})" style="border-left:3px solid ${cardBorder};${isStale?'opacity:.8':''}">
+          ${isCooling?`<div style="font-size:10px;color:#ff4757;background:#ff475715;padding:2px 7px;border-radius:4px;margin-bottom:5px;display:inline-block">🧊 Esfriando — ${dias}d sem contato</div>`:''}
+          ${isStale&&!isCooling?`<div style="font-size:10px;color:#ffcc00;background:#ffcc0015;padding:2px 7px;border-radius:4px;margin-bottom:5px;display:inline-block">⏳ Parado — ${dias}d</div>`:''}
           <div class="pipe-card-title">${l.name}</div>
           <div class="pipe-card-company">${l.company||'Sem empresa'}</div>
           ${l.value?`<div class="pipe-card-value">${fmtMoneyFull(+l.value)}</div>`:''}
@@ -1383,7 +1428,8 @@ function renderPipeline() {
             <span class="pipe-card-days" style="color:${diasColor}">${dias}d no estágio</span>
             <span class="pipe-card-prob" style="background:${scoreColor(prob)}20;color:${scoreColor(prob)}">${prob}%</span>
           </div>
-          ${l.followup?`<div style="font-size:10px;color:var(--yellow);margin-top:5px">📅 Follow-up: ${l.followup}</div>`:''}
+          ${l.proximaAcao?`<div style="font-size:10px;color:var(--accent);background:var(--accent-glow);padding:3px 7px;border-radius:4px;margin-top:5px">⚡ ${l.proximaAcao}</div>`:`<div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic">sem próxima ação</div>`}
+          ${l.followup?`<div style="font-size:10px;color:var(--yellow);margin-top:3px">📅 ${l.followup}</div>`:''}
           ${wlink?`<div style="margin-top:6px">${wlink}</div>`:''}
         </div>`;
       }).join(''):`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">vazio</div>`}
@@ -1429,8 +1475,38 @@ function pipeDrop(e, stage) {
     });
     save(); renderAll();
     showToast(`Lead movido para ${STAGE_LBL[stage]} ✓`);
+    // Pedir próxima ação após mover
+    if (stage !== 'fechado' && stage !== 'perdido') {
+      setTimeout(() => promptProximaAcao(leads[idx].id), 300);
+    }
   }
   dragLeadId = null;
+}
+
+function promptProximaAcao(leadId) {
+  const l = leads.find(x=>x.id===leadId);
+  if (!l) return;
+  // Mini modal para próxima ação
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:#00000060;z-index:3000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:24px;width:380px;box-shadow:var(--shadow)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px">⚡ Próxima ação para ${l.name}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Defina o próximo passo para manter o lead aquecido</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      ${['Ligar','WhatsApp','Enviar proposta','Marcar reunião','Aguardar resposta'].map(a=>`<button onclick="this.closest('div').nextElementSibling.value='${a}';document.querySelectorAll('.proxima-btn').forEach(b=>{b.style.background='';b.style.color=''});this.style.background='var(--accent)';this.style.color='#fff'" class="btn btn-ghost btn-sm proxima-btn" style="font-size:11px">${a}</button>`).join('')}
+    </div>
+    <input class="form-input" id="proxima-acao-input" placeholder="Descreva a próxima ação..." value="${l.proximaAcao||''}" style="margin-bottom:12px">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="this.closest('[style*=fixed]').remove()" class="btn btn-ghost btn-sm">Pular</button>
+      <button onclick="saveProximaAcao(${leadId},document.getElementById('proxima-acao-input').value);this.closest('[style*=fixed]').remove()" class="btn btn-primary btn-sm">Salvar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function saveProximaAcao(leadId, val) {
+  const idx = leads.findIndex(x=>x.id===leadId);
+  if (idx>-1) { leads[idx].proximaAcao = val; save(); renderAll(); }
 }
 
 function duplicateLead(id) {
@@ -1812,9 +1888,17 @@ function openDetail(id) {
   const l = leads.find(x=>x.id===id);
   if (!l) return;
   const sc = scoreOf(l);
+  const dias = daysSince(l.updatedAt||l.createdAt);
   document.getElementById('detail-name').textContent = l.name;
   const relActs = activities.filter(a=>a.leadId===id).slice(0,8);
   document.getElementById('detail-body').innerHTML = `
+    ${l.stage!=='fechado'&&l.stage!=='perdido'?`<div style="background:${l.proximaAcao?'var(--accent-glow)':'var(--red-light)'};border:1px solid ${l.proximaAcao?'var(--accent)':'#ff475730'};border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">⚡ PRÓXIMA AÇÃO</div>
+      ${l.proximaAcao
+        ? `<div style="font-size:13px;font-weight:600;color:var(--accent)">${l.proximaAcao}</div>`
+        : `<div style="font-size:12px;color:var(--red)">Nenhuma próxima ação definida</div>`}
+      <button onclick="promptProximaAcao(${id})" class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px">${l.proximaAcao?'✏️ Alterar':'+ Definir agora'}</button>
+    </div>`:''}
     <div class="detail-section">
       <div class="detail-section-title">Perfil do lead</div>
       ${[
@@ -1823,6 +1907,7 @@ function openDetail(id) {
         ['Temperatura',TEMP_LBL[l.temp]||l.temp],['Estágio',STAGE_LBL[l.stage]||l.stage],
         ['Valor',l.value?fmtMoneyFull(+l.value):'—'],['Origem',l.origin||'—'],
         ['Follow-up',l.followup||'—'],['Urgência',l.urgency||'—'],
+        ['Dias sem contato',dias+'d'+(dias>=2&&l.temp==='quente'?' 🧊':'')],
         ['Produto',{vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',membership:'💎 Membership',ambos:'Ambos'}[l.produto]||'—'],
         ['Score',sc+' pts'],
       ].map(([k,v])=>`<div class="detail-field"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
@@ -1980,7 +2065,13 @@ function leadForm(l) {
     </div>
   </div>
   <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
-  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto, próximos passos...">${l.notes||''}</textarea></div>
+  <div class="form-group"><label class="form-label">⚡ Próxima ação <span style="color:var(--accent)">*</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      ${['Ligar','WhatsApp','Enviar proposta','Marcar reunião','Aguardar resposta','Outro'].map(a=>`<button type="button" onclick="setProximaAcao('${a}',this)" class="btn btn-ghost btn-sm" style="font-size:11px;${(l.proximaAcao===a)?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${a}</button>`).join('')}
+    </div>
+    <input class="form-input" id="f-proxima-acao" value="${l.proximaAcao||''}" placeholder="Ex: Ligar amanhã às 14h para fechar proposta">
+  </div>
+  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto...">${l.notes||''}</textarea></div>
   <script>document.getElementById('f-stage').addEventListener('change',function(){document.getElementById('f-motivo-wrap').style.display=this.value==='perdido'?'block':'none';})<\/script>`;
 }
 
@@ -2009,6 +2100,12 @@ function activityForm(prefillLeadId, a) {
   <div class="form-group"><label class="form-label">Detalhes</label><textarea class="form-textarea" id="f-ameta" placeholder="O que foi discutido, próximos passos...">${a.meta||''}</textarea></div>`;
 }
 
+function setProximaAcao(val, btn) {
+  document.getElementById('f-proxima-acao').value = val;
+  document.querySelectorAll('#modal .btn-ghost').forEach(b=>{b.style.background='';b.style.color='';b.style.borderColor='';});
+  btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';
+}
+
 function saveModal() {
   if (currentModal === 'lead') {
     const name = document.getElementById('f-name').value.trim();
@@ -2028,6 +2125,7 @@ function saveModal() {
       produto:document.getElementById('f-produto').value,
       cadencia:parseInt(document.getElementById('f-cadencia').value)||3,
       motivoPerda:document.getElementById('f-motivo')?.value||'',
+      proximaAcao:document.getElementById('f-proxima-acao')?.value.trim()||'',
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
@@ -2202,33 +2300,74 @@ function renderProdutoTable(produto, wrapId, labelId, prefix) {
     const rec = fechados.reduce((s,l)=>s+(+l.value||0),0);
     const quentes = list.filter(l=>l.temp==='quente').length;
     const pipe = list.filter(l=>l.stage!=='fechado'&&l.stage!=='perdido').reduce((s,l)=>s+(+l.value||0),0);
+    const semAcao = list.filter(l=>!l.proximaAcao&&l.stage!=='fechado'&&l.stage!=='perdido').length;
     statsEl.innerHTML = [
       ['Leads',list.length,'#E8590C'],
       ['🔥 Quentes',quentes,'#ff4757'],
       ['Pipeline',fmtMoney(pipe),'#3d8ef8'],
       ['Fechados',fechados.length,'#00c97a'],
       ['Receita',fmtMoney(rec),'#ffcc00'],
+      ['Sem próx. ação',semAcao,semAcao>0?'#ff4757':'var(--text3)'],
     ].map(([k,v,c])=>`<div style="background:var(--surface2);border-radius:var(--r);padding:10px 14px"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${k}</div><div style="font-size:18px;font-weight:700;color:${c}">${v}</div></div>`).join('');
   }
 
   if (labelId) document.getElementById(labelId).textContent = list.length + ' leads';
   const wrap = document.getElementById(wrapId);
-  if (!list.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">'+(produto==='vendedor_x'?'🎯':'👑')+'</div><div class="empty-title">Nenhum lead aqui ainda</div><div class="empty-sub">Clique em "+ Novo Lead" para adicionar</div></div>'; return; }
-  wrap.innerHTML = `<table class="leads-table">
-    <thead><tr><th>Nome</th><th>Temperatura</th><th>Estágio</th><th>Contatos</th><th>Origem</th><th>Score</th><th>Próx. ação</th><th></th></tr></thead>
+  if (!list.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">'+(produto==='vendedor_x'?'🎯':produto==='lider_x'?'👑':'💎')+'</div><div class="empty-title">Nenhum lead aqui ainda</div><div class="empty-sub">Clique em "+ Novo Lead" para adicionar</div></div>'; return; }
+
+  // Origin analysis
+  const todosLeads = leads.filter(l=>l.produto===produto||(produto==='vendedor_x'&&!l.produto));
+  const origens = {};
+  todosLeads.forEach(l=>{
+    const o=l.origin||'outro';
+    if(!origens[o]) origens[o]={total:0,fechados:0};
+    origens[o].total++;
+    if(l.stage==='fechado') origens[o].fechados++;
+  });
+  const ORIGIN_LBL2={indicacao:'Indicação',instagram:'Instagram',google:'Google',anuncio:'Anúncio',whatsapp:'WhatsApp',email:'E-mail',evento:'Evento',outro:'Outro'};
+  const originHTML = Object.entries(origens).length ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">📊 Conversão por origem</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${Object.entries(origens).sort((a,b)=>b[1].total-a[1].total).map(([o,d])=>{
+          const conv = d.total>0?Math.round(d.fechados/d.total*100):0;
+          const cor = conv>=30?'#00e5a0':conv>=15?'#ffcc00':'var(--text3)';
+          return `<div style="background:var(--surface2);border-radius:var(--r);padding:10px 14px;min-width:110px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${ORIGIN_LBL2[o]||o}</div>
+            <div style="font-size:18px;font-weight:700">${d.total} leads</div>
+            <div style="font-size:11px;color:${cor};font-weight:600">${conv}% converteram</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  wrap.innerHTML = originHTML + `<table class="leads-table">
+    <thead><tr><th>Nome</th><th>Temperatura</th><th>Estágio</th><th>Contatos</th><th>Origem</th><th>Score</th><th>⚡ Próxima ação</th><th></th></tr></thead>
     <tbody>${list.map(l=>{
       const [bg,fg]=avCol(l.name); const sc=scoreOf(l);
+      const dias = daysSince(l.updatedAt||l.createdAt);
       const wlink = l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#00e5a0;text-decoration:none;margin-left:6px">💬</a>`:'';
       const contatosColor = (l.contatos||0)>=7?'#ff4757':(l.contatos||0)>=4?'#ffcc00':'var(--accent)';
+      const isCooling = l.temp==='quente'&&dias>=2;
       return `<tr onclick="openDetail(${l.id})" style="cursor:pointer">
         <td><div class="lead-name-wrap"><div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-          <div><div class="lead-name">${l.name}${wlink}</div><div class="lead-company">${l.company||'—'}</div></div></div></td>
+          <div>
+            <div class="lead-name">${l.name}${wlink}</div>
+            <div class="lead-company">${l.company||'—'}</div>
+            ${isCooling?`<div style="font-size:10px;color:#ff4757">🧊 ${dias}d sem contato</div>`:''}
+          </div></div></td>
         <td><span class="temp-badge temp-${l.temp}">${TEMP_LBL[l.temp]||l.temp}</span></td>
         <td><span class="stage-badge stage-${l.stage}">${STAGE_LBL[l.stage]||l.stage}</span></td>
         <td><span style="font-size:13px;font-weight:700;color:${contatosColor}">${l.contatos||0}</span><span style="font-size:10px;color:var(--text3)">/10</span></td>
-        <td style="color:var(--text2);font-size:12px">${l.origin||'—'}</td>
+        <td style="color:var(--text2);font-size:12px">${ORIGIN_LBL2[l.origin]||l.origin||'—'}</td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="score-bar"><div class="score-fill" style="width:${sc}%;background:${scoreColor(sc)}"></div></div><span style="font-size:11px;color:${scoreColor(sc)}">${sc}</span></div></td>
-        
+        <td style="max-width:160px">
+          ${l.proximaAcao
+            ? `<span style="font-size:11px;color:var(--accent);background:var(--accent-glow);padding:2px 8px;border-radius:6px">${l.proximaAcao}</span>`
+            : l.stage!=='fechado'&&l.stage!=='perdido'
+              ? `<button onclick="event.stopPropagation();promptProximaAcao(${l.id})" class="btn btn-ghost btn-sm" style="font-size:10px;color:#ff4757;border-color:#ff475730">+ Definir</button>`
+              : '—'}
+        </td>
         <td onclick="event.stopPropagation()"><div class="action-btns">
           <button class="icon-btn" onclick="editLead(${l.id})">✏️</button>
           <button class="icon-btn" onclick="deleteLead(${l.id})">🗑️</button>
@@ -2437,16 +2576,38 @@ function mastDrop(e,fase){
 
 // ─── META DE VENDAS ──────────────────────────────────────────────────────────
 let metaMensal = 0;
+let metaProdutos = {vendedor_x:0, lider_x:0, membership:0};
 
 async function loadMeta() {
   try {
     const snap = await db.collection('crm').doc('meta').get();
-    metaMensal = snap.exists ? (snap.data().valor || 0) : 0;
+    if (snap.exists) {
+      metaMensal = snap.data().valor || 0;
+      metaProdutos = snap.data().produtos || {vendedor_x:0,lider_x:0,membership:0};
+    }
   } catch(e){ metaMensal=0; }
 }
 
 async function saveMeta() {
-  try { await db.collection('crm').doc('meta').set({ valor: metaMensal }); } catch(e){}
+  try { await db.collection('crm').doc('meta').set({ valor: metaMensal, produtos: metaProdutos }); } catch(e){}
+}
+
+function metaBarHTML(rec, meta, cor) {
+  const pct = meta>0?Math.min(Math.round(rec/meta*100),100):0;
+  const barColor = pct>=100?'#00e5a0':pct>=60?'#ffcc00':'#E8590C';
+  return `<div style="margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:12px;font-weight:600;color:${barColor}">${fmtMoneyFull(rec)}</span>
+      <span style="font-size:11px;color:var(--text3)">de ${fmtMoneyFull(meta)}</span>
+    </div>
+    <div style="background:var(--surface2);border-radius:6px;height:8px;overflow:hidden">
+      <div style="height:100%;border-radius:6px;background:${barColor};width:${pct}%;transition:width .5s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:11px;color:var(--text3)">${pct}% atingido</span>
+      <span style="font-size:11px;color:${barColor};font-weight:600">${pct>=100?'🎉 Meta batida!':fmtMoneyFull(meta-rec)+' faltando'}</span>
+    </div>
+  </div>`;
 }
 
 function renderMeta() {
@@ -2475,16 +2636,42 @@ function renderMeta() {
     </div>` : `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Clique em "Definir meta" para configurar sua meta mensal</div>`;
 }
 
+function renderMetaProduto(produto, elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const now = new Date();
+  const som = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const isProd = l => l.produto===produto||(produto==='vendedor_x'&&!l.produto);
+  const rec = leads.filter(l=>isProd(l)&&l.stage==='fechado'&&(l.updatedAt||l.createdAt)>=som).reduce((s,l)=>s+(+l.value||0),0);
+  const meta = metaProdutos[produto]||0;
+  const cor = {vendedor_x:'#c084fc',lider_x:'#ffd740',membership:'#00e5a0'}[produto];
+  el.innerHTML = meta>0 ? metaBarHTML(rec,meta,cor) : `<div style="text-align:center;padding:10px;color:var(--text3);font-size:12px">
+    <button onclick="editMetaProduto('${produto}')" class="btn btn-ghost btn-sm" style="font-size:11px">+ Definir meta</button>
+  </div>`;
+}
+
 function editMeta() {
   const atual = metaMensal > 0 ? metaMensal : '';
-  const val = prompt('Defina sua meta de receita mensal (R$):', atual);
+  const val = prompt('Meta de receita mensal geral (R$):', atual);
   if (val === null) return;
   const num = parseFloat(val.replace(/[^\d.]/g,''));
   if (isNaN(num) || num < 0) { showToast('Valor inválido','#ff4757'); return; }
   metaMensal = num;
-  saveMeta();
-  renderMeta();
+  saveMeta(); renderMeta();
   showToast('Meta atualizada ✓');
+}
+
+function editMetaProduto(produto) {
+  const nomes = {vendedor_x:'Vendedor X',lider_x:'Líder X',membership:'Membership'};
+  const atual = metaProdutos[produto]||'';
+  const val = prompt(`Meta de receita mensal — ${nomes[produto]} (R$):`, atual);
+  if (val === null) return;
+  const num = parseFloat(val.replace(/[^\d.]/g,''));
+  if (isNaN(num)||num<0) { showToast('Valor inválido','#ff4757'); return; }
+  metaProdutos[produto] = num;
+  saveMeta();
+  renderAll();
+  showToast(`Meta ${nomes[produto]} atualizada ✓`);
 }
 
 // ─── TEMA CLARO/ESCURO ────────────────────────────────────────────────────────
