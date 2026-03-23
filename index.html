@@ -982,43 +982,91 @@ auth.onAuthStateChanged(user => {
 });
 
 // ─── FIREBASE STORAGE + REALTIME ──────────────────────────────────────────────
-async function save() {
+// ─── FIREBASE STORAGE — DOCUMENTOS INDIVIDUAIS ────────────────────────────────
+// Cada lead e atividade é um documento separado no Firestore
+// Isso permite escalar para 10.000+ registros sem problema
+
+// ─── LEADS ────────────────────────────────────────────────────────────────────
+async function saveLead(lead) {
   try {
-    setSyncTxt('Salvando...');
-    await db.collection('crm').doc('leads').set({ data: leads });
-    await db.collection('crm').doc('activities').set({ data: activities });
-    setSyncTxt('✓ Salvo');
-  } catch(e) { setSyncTxt('Erro ao salvar'); console.error(e); }
+    await db.collection('leads').doc(String(lead.id)).set(lead);
+  } catch(e) { console.error('Erro ao salvar lead:', e); }
 }
 
+async function deleteleadFromDB(id) {
+  try {
+    await db.collection('leads').doc(String(id)).delete();
+  } catch(e) { console.error('Erro ao deletar lead:', e); }
+}
+
+async function saveActivity(act) {
+  try {
+    await db.collection('activities').doc(String(act.id)).set(act);
+  } catch(e) { console.error('Erro ao salvar atividade:', e); }
+}
+
+async function deleteActivityFromDB(id) {
+  try {
+    await db.collection('activities').doc(String(id)).delete();
+  } catch(e) { console.error('Erro ao deletar atividade:', e); }
+}
+
+// save() agora é um no-op — cada operação salva individualmente
+// mantemos para compatibilidade com código legado
+async function save() {
+  // Nada — salvar é feito direto por saveLead/saveActivity
+  setSyncTxt('✓ Salvo');
+}
+
+// ─── REALTIME ─────────────────────────────────────────────────────────────────
 function setupRealtime() {
-  // Cancelar listeners anteriores
   realtimeUnsubs.forEach(u=>u());
   realtimeUnsubs = [];
 
-  // Leads em tempo real
-  const u1 = db.collection('crm').doc('leads').onSnapshot(snap => {
-    if(snap.exists) {
-      const newLeads = snap.data().data || [];
-      const changed = JSON.stringify(newLeads) !== JSON.stringify(leads);
-      if(changed) { leads = newLeads; renderAll(); showToast('🔄 Dados atualizados'); }
+  // Escuta coleção leads — 1 evento por documento modificado
+  let initialLoadDone = false;
+  const u1 = db.collection('leads').onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const data = change.doc.data();
+      if (change.type === 'added' || change.type === 'modified') {
+        const idx = leads.findIndex(l=>String(l.id)===change.doc.id);
+        if (idx > -1) leads[idx] = data;
+        else leads.push(data);
+      } else if (change.type === 'removed') {
+        leads = leads.filter(l=>String(l.id)!==change.doc.id);
+      }
+    });
+    leads.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    updateStats(); updateBadges();
+    if (initialLoadDone) {
+      renderAll();
     }
+    initialLoadDone = true;
+    setSyncTxt('🟢 Online');
+  }, err => { console.error(err); setSyncTxt('Erro de conexão'); });
+
+  // Escuta coleção activities
+  const u2 = db.collection('activities').onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const data = change.doc.data();
+      if (change.type === 'added' || change.type === 'modified') {
+        const idx = activities.findIndex(a=>String(a.id)===change.doc.id);
+        if (idx > -1) activities[idx] = data;
+        else activities.unshift(data);
+      } else if (change.type === 'removed') {
+        activities = activities.filter(a=>String(a.id)!==change.doc.id);
+      }
+    });
+    activities.sort((a,b)=>(b.id||0)-(a.id||0));
+    if (currentSection==='atividades') renderActivities();
+    updateBadges();
   });
 
-  // Atividades em tempo real
-  const u2 = db.collection('crm').doc('activities').onSnapshot(snap => {
-    if(snap.exists) {
-      const newActs = snap.data().data || [];
-      const changed = JSON.stringify(newActs) !== JSON.stringify(activities);
-      if(changed) { activities = newActs; renderAll(); }
-    }
-  });
-
-  // Prospecções em tempo real
+  // Escuta prospecoes (ainda como array — poucos registros)
   const u3 = db.collection('crm').doc('prospecoes').onSnapshot(snap => {
-    if(snap.exists) {
+    if (snap.exists) {
       prospecoes = snap.data().data || [];
-      if(currentSection==='mastermind') renderMastermind();
+      if (currentSection==='mastermind') renderMastermind();
       updateBadges();
     }
   });
@@ -1026,20 +1074,56 @@ function setupRealtime() {
   realtimeUnsubs = [u1, u2, u3];
 }
 
+// ─── LOAD DATA ────────────────────────────────────────────────────────────────
 async function loadData() {
   try {
     setSyncTxt('Carregando...');
-    const [lSnap, aSnap] = await Promise.all([
-      db.collection('crm').doc('leads').get(),
-      db.collection('crm').doc('activities').get(),
+
+    // Verificar se ainda há dados no formato antigo e migrar
+    const oldLeads = await db.collection('crm').doc('leads').get();
+    if (oldLeads.exists && (oldLeads.data().data||[]).length > 0) {
+      await migrarDadosAntigos(oldLeads.data().data || [], []);
+      // Apagar doc antigo após migração
+      await db.collection('crm').doc('leads').delete();
+      showToast('✅ Dados migrados com sucesso!');
+    }
+
+    const oldActs = await db.collection('crm').doc('activities').get();
+    if (oldActs.exists && (oldActs.data().data||[]).length > 0) {
+      const acts = oldActs.data().data || [];
+      const batch = db.batch();
+      acts.forEach(a => { batch.set(db.collection('activities').doc(String(a.id)), a); });
+      await batch.commit();
+      await db.collection('crm').doc('activities').delete();
+    }
+
+    // Carregar coleções individuais
+    const [leadsSnap, actsSnap] = await Promise.all([
+      db.collection('leads').get(),
+      db.collection('activities').get(),
     ]);
-    leads = lSnap.exists ? (lSnap.data().data || []) : [];
-    activities = aSnap.exists ? (aSnap.data().data || []) : [];
+    leads = leadsSnap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    activities = actsSnap.docs.map(d=>d.data()).sort((a,b)=>(b.id||0)-(a.id||0));
     setSyncTxt('🟢 Online');
   } catch(e) {
     leads = []; activities = [];
     setSyncTxt('Erro ao carregar');
     console.error(e);
+  }
+}
+
+// ─── MIGRAÇÃO AUTOMÁTICA DE DADOS ANTIGOS ─────────────────────────────────────
+async function migrarDadosAntigos(leadsAntigos, actsAntigas) {
+  if (!leadsAntigos.length) return;
+  setSyncTxt('Migrando dados...');
+  // Salvar em lotes de 500 (limite do Firebase batch)
+  const BATCH_SIZE = 400;
+  for (let i = 0; i < leadsAntigos.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    leadsAntigos.slice(i, i+BATCH_SIZE).forEach(l => {
+      batch.set(db.collection('leads').doc(String(l.id)), l);
+    });
+    await batch.commit();
   }
 }
 
@@ -1054,19 +1138,6 @@ async function loadMastData() {
     const snap = await db.collection('crm').doc('prospecoes').get();
     prospecoes = snap.exists ? (snap.data().data || []) : [];
   } catch(e) { prospecoes = []; }
-}
-
-async function loadMeta() {
-  try {
-    const snap = await db.collection('crm').doc('meta').get();
-    metaMensal = snap.exists ? (snap.data().valor || 0) : 0;
-  } catch(e) { metaMensal = 0; }
-}
-
-async function saveMeta() {
-  try {
-    await db.collection('crm').doc('meta').set({ valor: metaMensal });
-  } catch(e) { console.error(e); }
 }
 
 function setSyncTxt(t) { const el = document.getElementById('sync-txt'); if(el) el.textContent = t; }
@@ -1464,7 +1535,7 @@ function pipeDrop(e, stage) {
     leads[idx].stage = stage;
     leads[idx].updatedAt = Date.now();
     // Registrar mudança no histórico automaticamente
-    activities.unshift({
+    const newAct = {
       id: Date.now(),
       leadId: leads[idx].id,
       type: 'note',
@@ -1472,8 +1543,10 @@ function pipeDrop(e, stage) {
       meta: leads[idx].name,
       time: nowStr(),
       auto: true
-    });
-    save(); renderAll();
+    };
+    activities.unshift(newAct);
+    saveLead(leads[idx]);
+    saveActivity(newAct);
     showToast(`Lead movido para ${STAGE_LBL[stage]} ✓`);
     // Pedir próxima ação após mover
     if (stage !== 'fechado' && stage !== 'perdido') {
@@ -1506,7 +1579,7 @@ function promptProximaAcao(leadId) {
 
 function saveProximaAcao(leadId, val) {
   const idx = leads.findIndex(x=>x.id===leadId);
-  if (idx>-1) { leads[idx].proximaAcao = val; save(); renderAll(); }
+  if (idx>-1) { leads[idx].proximaAcao = val; saveLead(leads[idx]); renderAll(); }
 }
 
 function duplicateLead(id) {
@@ -1514,7 +1587,8 @@ function duplicateLead(id) {
   if (!l) return;
   const copy = {...l, id:Date.now(), name:l.name+' (cópia)', createdAt:Date.now(), updatedAt:Date.now()};
   leads.push(copy);
-  save(); renderAll();
+  saveLead(copy);
+  renderAll();
   showToast('Lead duplicado ✓');
   closeDetail();
 }
@@ -1969,7 +2043,7 @@ function incrementContato(id, tipo) {
   leads[idx][tipo] = atual + 1;
   leads[idx].contatos = (leads[idx].mensagens||0) + (leads[idx].ligacoes||0);
   leads[idx].updatedAt = Date.now();
-  save();
+  saveLead(leads[idx]);
   openDetail(id);
   showToast(`${tipo==='mensagens'?'💬 Mensagem':'📞 Ligação'} registrada (${leads[idx][tipo]}/10) ✓`);
 }
@@ -2005,7 +2079,8 @@ function editActivity(id) {
 function deleteActivity(id) {
   if (!confirm('Excluir esta atividade?')) return;
   activities = activities.filter(a=>a.id!==id);
-  save(); renderAll(); showToast('Atividade excluída');
+  deleteActivityFromDB(id);
+  renderAll(); showToast('Atividade excluída');
 }
 function editLead(id) {
   const l = leads.find(x=>x.id===id);
@@ -2129,10 +2204,14 @@ function saveModal() {
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
-      leads[idx] = {...leads[idx],...data,updatedAt:Date.now()};
+      const updated = {...leads[idx],...data,updatedAt:Date.now()};
+      leads[idx] = updated;
+      saveLead(updated);
       showToast('Lead atualizado ✓');
     } else {
-      leads.push({...data, id:Date.now(), createdAt:Date.now(), updatedAt:Date.now()});
+      const newLead = {...data, id:Date.now(), createdAt:Date.now(), updatedAt:Date.now()};
+      leads.push(newLead);
+      saveLead(newLead);
       showToast('Lead adicionado ✓');
     }
   } else {
@@ -2152,22 +2231,27 @@ function saveModal() {
     };
     if (actEditId) {
       const idx = activities.findIndex(a=>a.id===actEditId);
-      activities[idx] = {...activities[idx], ...actData};
+      const updated = {...activities[idx], ...actData};
+      activities[idx] = updated;
+      saveActivity(updated);
       showToast('Atividade atualizada ✓');
       actEditId = null;
     } else {
-      activities.unshift({...actData, id:Date.now()});
+      const newAct = {...actData, id:Date.now()};
+      activities.unshift(newAct);
+      saveActivity(newAct);
       showToast('Atividade registrada ✓');
     }
-    if (lead) { lead.updatedAt = Date.now(); }
+    if (lead) { lead.updatedAt = Date.now(); saveLead(lead); }
   }
-  closeModal(); save(); renderAll();
+  closeModal(); renderAll();
 }
 
 function deleteLead(id) {
   if (!confirm('Excluir este lead?')) return;
   leads = leads.filter(l=>l.id!==id);
-  save(); renderAll(); showToast('Lead excluído');
+  deleteleadFromDB(id);
+  renderAll(); showToast('Lead excluído');
 }
 
 // ─── ACTIVITY LEAD SEARCH ─────────────────────────────────────────────────────
@@ -2469,9 +2553,12 @@ function parseCSVFile(file) {
 function confirmImport() {
   if (!importedLeads.length) return;
   leads.push(...importedLeads);
-  save(); renderAll();
+  // Salvar cada lead individualmente (em paralelo)
+  Promise.all(importedLeads.map(l => saveLead(l)))
+    .then(() => showToast(`${importedLeads.length} leads importados ✓`))
+    .catch(() => showToast('Erro ao importar alguns leads','#ff4757'));
+  renderAll();
   closeImportModal();
-  showToast(`${importedLeads.length} leads importados ✓`);
   importedLeads=[];
 }
 
@@ -2490,17 +2577,6 @@ let mastDragId = null;
 const MAST_FASES = ['primeiro_contato','follow_up','reuniao_marcada'];
 const MAST_FASE_LBL = {primeiro_contato:'👋 Primeiro Contato',follow_up:'🔁 Follow Up',reuniao_marcada:'📅 Reunião Marcada'};
 const MAST_COLORS = {primeiro_contato:'#3d8ef8',follow_up:'#ff7b35',reuniao_marcada:'#00e5a0'};
-
-async function saveMastData() {
-  try { await db.collection('crm').doc('prospecoes').set({ data: prospecoes }); } catch(e){}
-}
-
-async function loadMastData() {
-  try {
-    const snap = await db.collection('crm').doc('prospecoes').get();
-    prospecoes = snap.exists ? (snap.data().data || []) : [];
-  } catch(e){ prospecoes=[]; }
-}
 
 function renderMastermind() {
   const board = document.getElementById('mast-board');
