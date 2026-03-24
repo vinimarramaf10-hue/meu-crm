@@ -429,6 +429,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
           <div class="nav-sub">
             <button class="nav-sub-item" onclick="goTo('followups',this)">Follow-ups</button>
+            <button class="nav-sub-item" onclick="goTo('cadencia',this)">Cadência <span id="nav-cadencia-badge" style="font-size:10px;color:#ff4757"></span></button>
             <button class="nav-sub-item" onclick="goTo('receita',this)">Receita por produto</button>
             <button class="nav-sub-item" onclick="goTo('comparativo',this)">Comparativo semanal</button>
             <button class="nav-sub-item" onclick="goTo('previsao',this)">Previsão de receita</button>
@@ -444,7 +445,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           </div>
         </div>
         <button class="nav-item" onclick="goTo('pipeline',this)"><span class="nav-icon">🏆</span><span>Pipeline</span></button>
-        <button class="nav-item" onclick="goTo('cadencia',this)"><span class="nav-icon">🔁</span><span>Cadência</span><span class="badge red" id="nav-cadencia-badge" style="display:none">0</span></button>
         <button class="nav-item" onclick="goTo('atividades',this)"><span class="nav-icon">📋</span><span>Atividades</span></button>
       </div>
       <div class="nav-group">
@@ -3009,31 +3009,50 @@ let cadenciaFilter = 'pendentes';
 
 // Retorna o passo atual da cadência para um lead
 function getCadenciaStatus(lead) {
-  if (!lead.cadenciaInicio) return null; // não iniciou cadência
+  if (!lead.cadenciaInicio) return null;
   const diasDesdeInicio = Math.floor((Date.now() - lead.cadenciaInicio) / 86400000);
-  const passoAtual = CADENCIA_FLUXO.findIndex(p => p.dia > diasDesdeInicio);
-  const ultimoPasso = passoAtual === -1 ? CADENCIA_FLUXO.length - 1 : passoAtual - 1;
-  // Encontrar próximo passo pendente (não realizado)
   const passosRealizados = lead.cadenciaPassos || [];
-  const proximoPasso = CADENCIA_FLUXO.find((p, i) => !passosRealizados.includes(i) && p.dia <= diasDesdeInicio + 1);
-  const atrasado = CADENCIA_FLUXO.find((p, i) => !passosRealizados.includes(i) && p.dia < diasDesdeInicio);
+
+  // Todos os passos que já deveriam ter sido feitos (dia <= diasDesdeInicio)
+  const passosPendentes = CADENCIA_FLUXO.filter((p, i) =>
+    !passosRealizados.includes(i) && p.dia <= diasDesdeInicio
+  );
+  // Próximo passo = primeiro não realizado (já venceu ou vence amanhã)
+  const proximoPasso = CADENCIA_FLUXO.find((p, i) =>
+    !passosRealizados.includes(i) && p.dia <= diasDesdeInicio + 1
+  );
+  // Atrasado = há passos vencidos não feitos
+  const atrasado = CADENCIA_FLUXO.some((p, i) =>
+    !passosRealizados.includes(i) && p.dia < diasDesdeInicio
+  );
+  // Concluída = todos os passos realizados ou passou do dia 8
+  const concluida = passosRealizados.length >= CADENCIA_FLUXO.length || diasDesdeInicio > 10;
+
   return {
     diasDesdeInicio,
     proximoPasso,
     proximoPassoIdx: proximoPasso ? CADENCIA_FLUXO.indexOf(proximoPasso) : -1,
-    atrasado: !!atrasado,
-    concluida: passosRealizados.length >= CADENCIA_FLUXO.length,
+    atrasado,
+    concluida,
     passosRealizados,
     totalPassos: CADENCIA_FLUXO.length,
+    passosPendentes: passosPendentes.length,
   };
 }
 
-// Leads que estão em cadência = estágio "lead" ou "primeiro_contato" com cadenciaInicio definido
+// Todos os leads que podem entrar em cadência (qualquer estágio ativo)
 function getLeadsEmCadencia() {
   return leads.filter(l =>
+    l.stage !== 'fechado' && l.stage !== 'perdido' &&
+    l.cadenciaInicio && !l.cadenciaEncerrada
+  );
+}
+
+// Leads elegíveis para cadência mas ainda não iniciaram
+function getLeadsSemCadencia() {
+  return leads.filter(l =>
     (l.stage === 'lead' || l.stage === 'primeiro_contato') &&
-    l.cadenciaInicio &&
-    !l.cadenciaEncerrada
+    !l.cadenciaInicio && !l.cadenciaEncerrada
   );
 }
 
@@ -3044,15 +3063,32 @@ function setCadenciaFilter(f, btn) {
   renderCadencia();
 }
 
-function iniciarCadencia(leadId) {
+function iniciarCadencia(leadId, diaInicio) {
   const idx = leads.findIndex(l=>l.id===leadId);
   if (idx===-1) return;
-  leads[idx].cadenciaInicio = Date.now();
+  // diaInicio permite ajustar o dia de início (ex: já está no dia 2)
+  const diasOffset = diaInicio || 0;
+  leads[idx].cadenciaInicio = Date.now() - (diasOffset * 86400000);
   leads[idx].cadenciaPassos = [];
   leads[idx].cadenciaEncerrada = false;
   saveLead(leads[idx]);
   renderAll();
   showToast('🔁 Cadência iniciada!');
+}
+
+function editarDiaCadencia(leadId) {
+  const l = leads.find(x=>x.id===leadId);
+  if (!l||!l.cadenciaInicio) return;
+  const diaAtual = Math.floor((Date.now()-l.cadenciaInicio)/86400000);
+  const novo = prompt(`Cadência está no Dia ${diaAtual}. Em qual dia deseja colocar?`, diaAtual);
+  if (novo===null) return;
+  const num = parseInt(novo);
+  if (isNaN(num)||num<0) { showToast('Dia inválido','#ff4757'); return; }
+  const idx = leads.findIndex(x=>x.id===leadId);
+  leads[idx].cadenciaInicio = Date.now() - (num * 86400000);
+  saveLead(leads[idx]);
+  renderAll();
+  showToast(`Cadência ajustada para Dia ${num} ✓`);
 }
 
 function encerrarCadencia(leadId, motivo) {
@@ -3062,7 +3098,7 @@ function encerrarCadencia(leadId, motivo) {
   leads[idx].cadenciaMotivo = motivo;
   saveLead(leads[idx]);
   renderAll();
-  showToast(motivo === 'respondeu' ? '✅ Lead respondeu — inicie o follow-up!' : '📋 Cadência encerrada');
+  showToast(motivo==='respondeu'?'✅ Lead respondeu — inicie o follow-up!':'📋 Cadência encerrada');
 }
 
 function marcarPassoCadencia(leadId, passoIdx) {
@@ -3071,16 +3107,11 @@ function marcarPassoCadencia(leadId, passoIdx) {
   if (!leads[idx].cadenciaPassos) leads[idx].cadenciaPassos = [];
   if (!leads[idx].cadenciaPassos.includes(passoIdx)) {
     leads[idx].cadenciaPassos.push(passoIdx);
-    // Registrar atividade automaticamente
     const passo = CADENCIA_FLUXO[passoIdx];
     const newAct = {
-      id: Date.now(),
-      leadId: leads[idx].id,
-      type: passo.tipo,
+      id: Date.now(), leadId: leads[idx].id, type: passo.tipo,
       title: `[Cadência Dia ${passo.dia}] ${passo.label}`,
-      meta: leads[idx].name,
-      time: nowStr(),
-      auto: false,
+      meta: leads[idx].name, time: nowStr(), auto: false,
     };
     activities.unshift(newAct);
     saveActivity(newAct);
@@ -3088,7 +3119,7 @@ function marcarPassoCadencia(leadId, passoIdx) {
   leads[idx].updatedAt = Date.now();
   saveLead(leads[idx]);
   renderAll();
-  showToast('✓ Passo registrado!');
+  showToast('✓ Passo marcado!');
 }
 
 function renderCadencia() {
@@ -3097,131 +3128,146 @@ function renderCadencia() {
   if (!statsEl || !boardEl) return;
 
   const emCadencia = getLeadsEmCadencia();
-  const pendentesHoje = emCadencia.filter(l => {
-    const s = getCadenciaStatus(l);
-    return s && s.proximoPasso && !s.atrasado;
-  });
-  const atrasados = emCadencia.filter(l => {
-    const s = getCadenciaStatus(l);
-    return s && s.atrasado;
-  });
-  const concluidos = leads.filter(l => l.cadenciaEncerrada);
+  const semCadencia = getLeadsSemCadencia();
+  const pendentes = emCadencia.filter(l=>{const s=getCadenciaStatus(l);return s&&s.proximoPasso;});
+  const atrasados = emCadencia.filter(l=>{const s=getCadenciaStatus(l);return s&&s.atrasado;});
+  const concluidos = leads.filter(l=>l.cadenciaEncerrada);
 
-  // Atualizar badge
-  const total = pendentesHoje.length + atrasados.length;
+  // Badge no submenu
   const badge = document.getElementById('nav-cadencia-badge');
-  if (badge) { badge.textContent = total; badge.style.display = total > 0 ? 'inline' : 'none'; }
+  const total = pendentes.length + atrasados.length;
+  if (badge) badge.textContent = total > 0 ? `· ${total}` : '';
 
+  // Stats
   statsEl.innerHTML = [
     ['Em cadência', emCadencia.length, 'var(--accent)'],
-    ['⚡ Pendentes hoje', pendentesHoje.length, '#ffcc00'],
+    ['⚡ Pendentes', pendentes.length, '#ffcc00'],
     ['🔴 Atrasados', atrasados.length, '#ff4757'],
+    ['📋 Sem iniciar', semCadencia.length, 'var(--text3)'],
     ['✅ Encerraram', concluidos.length, '#00e5a0'],
-  ].map(([k,v,c])=>`<div style="background:var(--surface2);border-radius:var(--r);padding:10px 14px">
+  ].map(([k,v,c])=>`<div style="background:var(--surface2);border-radius:var(--r);padding:10px 14px;text-align:center">
     <div style="font-size:10px;color:var(--text3);margin-bottom:3px">${k}</div>
-    <div style="font-size:20px;font-weight:700;color:${c}">${v}</div>
+    <div style="font-size:22px;font-weight:700;color:${c}">${v}</div>
   </div>`).join('');
 
-  // Filtrar leads conforme filtro
+  // Lista conforme filtro
   let lista = emCadencia;
-  if (cadenciaFilter === 'pendentes') lista = emCadencia.filter(l => { const s=getCadenciaStatus(l); return s&&s.proximoPasso; });
-  if (cadenciaFilter === 'atrasados') lista = atrasados;
+  if (cadenciaFilter==='pendentes') lista = pendentes;
+  if (cadenciaFilter==='atrasados') lista = atrasados;
 
-  if (!lista.length) {
-    // Mostrar leads sem cadência iniciada
-    const semCadencia = leads.filter(l=>(l.stage==='lead'||l.stage==='primeiro_contato')&&!l.cadenciaInicio&&!l.cadenciaEncerrada);
-    boardEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)">
-      <div style="font-size:32px;margin-bottom:10px">🔁</div>
-      <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Nenhum lead pendente neste filtro</div>
-      ${semCadencia.length ? `<div style="font-size:12px;margin-bottom:14px">${semCadencia.length} lead(s) ainda não iniciaram cadência</div>
-        <button class="btn btn-primary btn-sm" onclick="setCadenciaFilter('todos',document.querySelector('[onclick*=todos]'))">Ver todos</button>` : ''}
+  let html = '';
+
+  if (lista.length) {
+    html += lista.map(l => {
+      const s = getCadenciaStatus(l);
+      if (!s) return '';
+      const [bg,fg] = avCol(l.name);
+      const progPct = Math.round((s.passosRealizados.length / s.totalPassos) * 100);
+      const urgente = s.atrasado;
+
+      return `<div style="background:var(--surface);border:1px solid ${urgente?'#ff475740':'var(--border2)'};border-radius:var(--r2);padding:18px;margin-bottom:10px;${urgente?'border-left:3px solid #ff4757':''}">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+
+          <!-- Avatar + info lead -->
+          <div style="display:flex;align-items:center;gap:10px;min-width:180px;cursor:pointer" onclick="openDetail(${l.id})">
+            <div class="avatar-sm" style="background:${bg};color:${fg};width:36px;height:36px;font-size:13px">${initials(l.name)}</div>
+            <div>
+              <div style="font-size:13px;font-weight:600">${l.name}</div>
+              <div style="font-size:11px;color:var(--text3)">${l.company||'—'}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">${PROD_LBL[l.produto]||'—'} · <span style="color:var(--accent)">Dia ${s.diasDesdeInicio}</span></div>
+            </div>
+          </div>
+
+          <!-- Fluxo visual dos passos -->
+          <div style="flex:2;min-width:260px">
+            <div style="display:flex;align-items:center;gap:3px;margin-bottom:8px;flex-wrap:wrap">
+              ${CADENCIA_FLUXO.map((p,i)=>{
+                const feito = s.passosRealizados.includes(i);
+                const ehProximo = s.proximoPassoIdx===i;
+                const venceu = p.dia <= s.diasDesdeInicio;
+                const cor = CANAL_COR[p.canal];
+                const bg2 = feito ? cor : ehProximo ? cor+'30' : venceu&&!feito ? '#ff475720' : 'var(--surface2)';
+                const borderC = feito ? cor : ehProximo ? cor : venceu&&!feito ? '#ff4757' : 'var(--border)';
+                const textC = feito ? '#fff' : ehProximo ? cor : venceu&&!feito ? '#ff4757' : 'var(--text3)';
+                return `<div onclick="marcarPassoCadencia(${l.id},${i})" title="Dia ${p.dia}: ${p.label}${feito?' ✓ Feito':ehProximo?' ← Fazer agora':venceu?' ← Atrasado':''}"
+                  style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:30px">
+                  <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:1.5px solid ${borderC};background:${bg2};color:${textC};transition:all .15s">
+                    ${feito?'✓':CANAL_ICON[p.canal]}
+                  </div>
+                  <div style="font-size:9px;color:${textC}">D${p.dia}</div>
+                </div>`;
+              }).join('')}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;background:var(--surface2);border-radius:4px;height:4px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;background:${progPct===100?'#00e5a0':'var(--accent)'};width:${progPct}%;transition:width .3s"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);white-space:nowrap">${s.passosRealizados.length}/${s.totalPassos}</div>
+            </div>
+          </div>
+
+          <!-- Próximo passo -->
+          <div style="flex:1.5;min-width:180px">
+            ${s.proximoPasso ? `
+              <div style="background:${urgente?'#ff475712':'var(--accent-glow)'};border:1px solid ${urgente?'#ff475730':'var(--accent)30'};border-radius:var(--r);padding:10px">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--text3);margin-bottom:5px">${urgente?'🔴 ATRASADO':'⚡ FAZER AGORA'}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  <span style="font-size:18px">${CANAL_ICON[s.proximoPasso.canal]}</span>
+                  <span style="font-size:12px;font-weight:600;color:${CANAL_COR[s.proximoPasso.canal]}">${s.proximoPasso.label}</span>
+                </div>
+                <div style="font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.4">${s.proximoPasso.desc}</div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap">
+                  ${s.proximoPasso.canal==='whatsapp'&&l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm" style="font-size:10px;text-decoration:none;padding:4px 8px">💬 Abrir WA</a>`:''}
+                  ${s.proximoPasso.canal==='ligacao'&&l.phone?`<a href="tel:${l.phone}" class="btn btn-primary btn-sm" style="font-size:10px;text-decoration:none;padding:4px 8px">📞 Ligar</a>`:''}
+                  <button onclick="marcarPassoCadencia(${l.id},${s.proximoPassoIdx})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 8px">✓ Feito</button>
+                </div>
+              </div>
+            ` : `<div style="font-size:11px;color:#00e5a0;padding:8px">✅ Todos os passos feitos!</div>`}
+          </div>
+
+          <!-- Ações -->
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+            <button onclick="editarDiaCadencia(${l.id})" class="btn btn-ghost btn-sm" style="font-size:10px">✏️ Editar dia</button>
+            ${l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:10px;text-decoration:none">💬 WA</a>`:''}
+            <button onclick="encerrarCadencia(${l.id},'respondeu')" class="btn btn-ghost btn-sm" style="font-size:10px;color:#00e5a0;border-color:#00e5a030">✅ Respondeu</button>
+            <button onclick="encerrarCadencia(${l.id},'sem_resposta')" class="btn btn-ghost btn-sm" style="font-size:10px;color:#ff4757;border-color:#ff475730">❌ Sem resposta</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    html += `<div style="text-align:center;padding:24px;color:var(--text3)">
+      <div style="font-size:28px;margin-bottom:8px">🔁</div>
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:4px">Nenhum lead neste filtro</div>
+      <div style="font-size:11px">Tente outro filtro ou inicie uma cadência abaixo</div>
     </div>`;
-    return;
   }
 
-  boardEl.innerHTML = lista.map(l => {
-    const s = getCadenciaStatus(l);
-    if (!s) return '';
-    const [bg,fg] = avCol(l.name);
-    const progPct = Math.round((s.passosRealizados.length / s.totalPassos) * 100);
-
-    return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:10px">
-      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <!-- Info do lead -->
-        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px">
-          <div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-          <div>
-            <div style="font-size:13px;font-weight:600">${l.name}</div>
-            <div style="font-size:11px;color:var(--text3)">${l.company||'—'} · ${PROD_LBL[l.produto]||'—'}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">Dia ${s.diasDesdeInicio} de cadência</div>
-          </div>
-        </div>
-
-        <!-- Progresso -->
-        <div style="flex:1;min-width:180px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px">
-            <span>${s.passosRealizados.length}/${s.totalPassos} passos</span>
-            <span>${progPct}%</span>
-          </div>
-          <div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;border-radius:4px;background:var(--accent);width:${progPct}%;transition:width .3s"></div>
-          </div>
-          <!-- Passos visuais -->
-          <div style="display:flex;gap:4px">
-            ${CADENCIA_FLUXO.map((p,i)=>{
-              const feito = s.passosRealizados.includes(i);
-              const ehProximo = s.proximoPassoIdx === i;
-              const cor = CANAL_COR[p.canal];
-              return `<div title="Dia ${p.dia}: ${p.label}" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:2px solid ${feito?cor:ehProximo?cor+'80':'var(--border)'};background:${feito?cor:ehProximo?cor+'20':'var(--surface2)'};color:${feito?'#fff':ehProximo?cor:'var(--text3)'}" onclick="marcarPassoCadencia(${l.id},${i})">${feito?'✓':CANAL_ICON[p.canal]}</div>`;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Próximo passo -->
-        <div style="flex:1;min-width:200px">
-          ${s.proximoPasso ? `
-            <div style="background:${s.atrasado?'var(--red-light)':'var(--accent-glow)'};border:1px solid ${s.atrasado?'#ff475730':'var(--accent)30'};border-radius:var(--r);padding:10px">
-              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${s.atrasado?'🔴 ATRASADO — ':'⚡ '}PRÓXIMO PASSO</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                <span style="font-size:16px">${CANAL_ICON[s.proximoPasso.canal]}</span>
-                <span style="font-size:12px;font-weight:600;color:${CANAL_COR[s.proximoPasso.canal]}">${s.proximoPasso.label}</span>
-              </div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:8px">${s.proximoPasso.desc}</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                ${s.proximoPasso.canal==='whatsapp'&&l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm" style="font-size:11px;text-decoration:none">💬 Abrir WA</a>`:''}
-                ${s.proximoPasso.canal==='ligacao'&&l.phone?`<a href="tel:${l.phone}" class="btn btn-primary btn-sm" style="font-size:11px;text-decoration:none">📞 Ligar</a>`:''}
-                <button onclick="marcarPassoCadencia(${l.id},${s.proximoPassoIdx})" class="btn btn-ghost btn-sm" style="font-size:11px">✓ Marcar feito</button>
-              </div>
-            </div>
-          ` : `<div style="font-size:12px;color:var(--text3);padding:10px">Todos os passos realizados</div>`}
-        </div>
-
-        <!-- Ações -->
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <button onclick="openDetail(${l.id})" class="btn btn-ghost btn-sm" style="font-size:11px">Ver lead</button>
-          ${l.phone?`<a href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;text-decoration:none">💬 WA</a>`:''}
-          <button onclick="encerrarCadencia(${l.id},'respondeu')" class="btn btn-ghost btn-sm" style="font-size:11px;color:#00e5a0;border-color:#00e5a030">✅ Respondeu!</button>
-          <button onclick="encerrarCadencia(${l.id},'sem_resposta')" class="btn btn-ghost btn-sm" style="font-size:11px;color:#ff4757;border-color:#ff475730">❌ Sem resposta</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Mostrar leads sem cadência iniciada no final
-  const semCadencia = leads.filter(l=>(l.stage==='lead'||l.stage==='primeiro_contato')&&!l.cadenciaInicio&&!l.cadenciaEncerrada);
-  if (semCadencia.length && cadenciaFilter !== 'atrasados') {
-    boardEl.innerHTML += `<div style="margin-top:20px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">📋 Leads sem cadência iniciada (${semCadencia.length})</div>
+  // Seção de leads sem cadência iniciada
+  if (semCadencia.length) {
+    html += `<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">📋 Leads aguardando início de cadência (${semCadencia.length})</div>
       ${semCadencia.map(l=>{
-        const[bg,fg]=avCol(l.name);
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
-          <div class="avatar-sm" style="background:${bg};color:${fg}">${initials(l.name)}</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text3)">${l.company||'—'} · ${STAGE_LBL[l.stage]}</div></div>
-          <button onclick="iniciarCadencia(${l.id})" class="btn btn-primary btn-sm" style="font-size:11px">🔁 Iniciar cadência</button>
+        const[bg2,fg2]=avCol(l.name);
+        return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
+          <div class="avatar-sm" style="background:${bg2};color:${fg2}">${initials(l.name)}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500">${l.name}</div>
+            <div style="font-size:11px;color:var(--text3)">${l.company||'—'} · ${STAGE_LBL[l.stage]}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--text3)">Iniciar no:</span>
+            <select id="dia-inicio-${l.id}" class="form-select" style="padding:4px 8px;font-size:10px;width:80px">
+              ${CADENCIA_FLUXO.map(p=>`<option value="${p.dia}">Dia ${p.dia}</option>`).join('')}
+            </select>
+            <button onclick="iniciarCadencia(${l.id},parseInt(document.getElementById('dia-inicio-${l.id}').value))" class="btn btn-primary btn-sm" style="font-size:10px;padding:4px 10px">🔁 Iniciar</button>
+          </div>
         </div>`;
       }).join('')}
     </div>`;
   }
+
+  boardEl.innerHTML = html;
 }
 
 // ─── SUB-SECTIONS ─────────────────────────────────────────────────────────────
