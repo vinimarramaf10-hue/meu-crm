@@ -152,9 +152,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
 .stage-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500}
 .stage-lead{background:#3d8ef818;color:#6aaffe}
-.stage-qualificado{background:#a855f718;color:#c084fc}
+.stage-primeiro_contato{background:#00e5a018;color:#00e5a0}
+.stage-qualificacao{background:#a855f718;color:#c084fc}
 .stage-proposta{background:#ff7b3518;color:#ff9a5c}
 .stage-negociacao{background:#ffcc0018;color:#ffd740}
+.stage-follow_up{background:#ff7b3518;color:#ff9a5c}
 .stage-fechado{background:#00e5a018;color:#00e5a0}
 .stage-perdido{background:#ff475718;color:#ff6b7a}
 
@@ -650,10 +652,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
             <option value="">Todos os estágios</option>
             <option value="lead">Lead</option>
             <option value="primeiro_contato">Primeiro Contato</option>
-            <option value="follow_up">Follow Up</option>
-            <option value="qualificado">Qualificado</option>
+            <option value="qualificacao">Qualificação</option>
             <option value="proposta">Proposta</option>
             <option value="negociacao">Negociação</option>
+            <option value="follow_up">Follow Up</option>
             <option value="fechado">Fechado</option>
             <option value="perdido">Perdido</option>
           </select>
@@ -1167,9 +1169,9 @@ let currentSection = 'dashboard', currentModal = 'lead';
 let filterTemp = 'all', filterStage = '', filterOrigin = '', searchQ = '';
 let sortCol = '', sortDir = 1;
 
-const STAGES = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado','perdido'];
-const STAGE_LBL = {lead:'Lead',primeiro_contato:'Primeiro Contato',follow_up:'Follow Up',qualificado:'Qualificado',proposta:'Proposta',negociacao:'Negociação',fechado:'Fechado',perdido:'Perdido'};
-const STAGE_PROB = {lead:10,primeiro_contato:20,follow_up:35,qualificado:50,proposta:65,negociacao:80,fechado:100,perdido:0};
+const STAGES = ['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado','perdido'];
+const STAGE_LBL = {lead:'Lead',primeiro_contato:'Primeiro Contato',qualificacao:'Qualificação',proposta:'Proposta',negociacao:'Negociação',follow_up:'Follow Up',fechado:'Fechado',perdido:'Perdido'};
+const STAGE_PROB = {lead:10,primeiro_contato:20,qualificacao:40,proposta:60,negociacao:75,follow_up:85,fechado:100,perdido:0};
 const TEMP_LBL = {quente:'🔥 Quente',morno:'🟡 Morno',frio:'❄️ Frio'};
 const AV_COLORS = [['#00e5a020','#00e5a0'],['#3d8ef820','#6aaffe'],['#a855f720','#c084fc'],['#ff7b3520','#ff9a5c'],['#ff475720','#ff6b7a']];
 
@@ -1200,7 +1202,7 @@ function nbaFor(lead) {
   if (lead.stage === 'lead') return '📞 Fazer primeiro contato';
   if (lead.stage === 'primeiro_contato') return '🔁 Iniciar follow up';
   if (lead.stage === 'follow_up' && d > 2) return '🔁 Novo follow up urgente';
-  if (lead.stage === 'qualificado') return '📄 Enviar proposta';
+  if (lead.stage === 'qualificacao') return '📄 Enviar proposta';
   if (lead.stage === 'proposta' && d > 3) return '🔁 Follow-up da proposta';
   if (lead.stage === 'negociacao') return '🤝 Agendar reunião de fechamento';
   if (lead.temp === 'frio' && d > 7) return '♻️ Reativar com novo ângulo';
@@ -1350,7 +1352,7 @@ function renderDashboard() {
       <span style="font-size:11px;color:var(--yellow);font-weight:500">📅 ${new Date(l.followup+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span>
     </div>`).join('');
 
-  const pipeStages = ['lead','qualificado','proposta','negociacao','fechado'];
+  const pipeStages = ['lead','qualificacao','proposta','negociacao','follow_up','fechado'];
   const colors3 = ['#3d8ef8','#a855f7','#ff7b35','#ffcc00','#00e5a0'];
   const counts = pipeStages.map(s=>leads.filter(l=>l.stage===s).length);
   const maxC = Math.max(1,...counts);
@@ -1358,7 +1360,7 @@ function renderDashboard() {
     <div class="mini-bar-wrap">
       <div class="mini-bar-val">${counts[i]}</div>
       <div class="mini-bar" style="height:${Math.max(counts[i]/maxC*60,counts[i]>0?6:0)}px;background:${colors3[i]}"></div>
-      <div class="mini-bar-label">${{lead:'Lead',qualificado:'Quali.',proposta:'Prop.',negociacao:'Neg.',fechado:'Fecha.'}[s]}</div>
+      <div class="mini-bar-label">${{lead:'Lead',qualificacao:'Quali.',proposta:'Prop.',negociacao:'Neg.',follow_up:'F.Up',fechado:'Fecha.'}[s]}</div>
     </div>`).join('');
 
   // Comparativo e previsão
@@ -1492,8 +1494,8 @@ let dragLeadId = null;
 
 function renderPipeline() {
   const board = document.getElementById('pipeline-board');
-  const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
-  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',follow_up:'#ff7b35',qualificado:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',fechado:'#00e5a0'};
+  const pipeStages = ['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado'];
+  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',qualificacao:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',follow_up:'#ff7b35',fechado:'#00e5a0'};
   board.innerHTML = pipeStages.map(stage=>{
     const sd = leads.filter(l=>l.stage===stage);
     const total = sd.reduce((s,l)=>s+(+l.value||0),0);
@@ -1795,7 +1797,7 @@ function renderReports() {
     <div class="stat-card"><div class="stat-label">Atividades</div><div class="stat-val" style="color:var(--yellow)">${pActs.length}</div></div>`;
 
   // Funil
-  const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
+  const pipeStages = ['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado'];
   const colors2 = ['#3d8ef8','#00e5a0','#ff7b35','#a855f7','#ff4757','#ffcc00','#00e5a0'];
   const maxCount = Math.max(1, ...pipeStages.map(s=>pLeads.filter(l=>l.stage===s).length));
   document.getElementById('funnel-chart').innerHTML = pipeStages.map((s,i)=>{
@@ -1913,7 +1915,7 @@ function downloadPDF() {
   const periodNames = {diario:'Diário',semanal:'Semanal',mensal:'Mensal',geral:'Geral'};
 
   const stageCount = {};
-  ['lead','qualificado','proposta','negociacao','fechado','perdido'].forEach(s=>{ stageCount[s]=pLeads.filter(l=>l.stage===s).length; });
+  ['lead','qualificacao','proposta','negociacao','follow_up','fechado','perdido'].forEach(s=>{ stageCount[s]=pLeads.filter(l=>l.stage===s).length; });
   const origins = {};
   pLeads.forEach(l=>{ if(l.origin) origins[l.origin]=(origins[l.origin]||0)+1; });
 
@@ -1956,7 +1958,7 @@ function downloadPDF() {
 
   <h2>Funil de conversão</h2>
   <table><thead><tr><th>Estágio</th><th>Qtd. de leads</th></tr></thead><tbody>
-  ${['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado','perdido'].map(s=>`<tr><td>${STAGE_LBL[s]}</td><td><strong>${stageCount[s]||0}</strong></td></tr>`).join('')}
+  ${['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado','perdido'].map(s=>`<tr><td>${STAGE_LBL[s]}</td><td><strong>${stageCount[s]||0}</strong></td></tr>`).join('')}
   </tbody></table>
 
   <h2>Origem dos leads</h2>
@@ -2145,7 +2147,7 @@ function leadForm(l) {
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Temperatura</label>${sel('f-temp',[['quente','🔥 Quente'],['morno','🟡 Morno'],['frio','❄️ Frio']],l.temp||'morno')}</div>
-    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['follow_up','Follow Up'],['qualificado','Qualificado'],['proposta','Proposta'],['negociacao','Negociação'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')} </div>
+    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['qualificacao','Qualificação'],['proposta','Proposta'],['negociacao','Negociação'],['follow_up','Follow Up'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')} </div>
   </div>
   <div id="f-motivo-wrap" style="${l.stage==='perdido'?'':'display:none'}">
     <div class="form-group"><label class="form-label">❌ Motivo da perda</label>${sel('f-motivo',[['preco','Preço alto'],['concorrencia','Concorrência'],['sem_interesse','Sem interesse'],['sem_dinheiro','Sem dinheiro agora'],['timing','Timing errado'],['nao_respondeu','Não respondeu'],['outro','Outro']],l.motivoPerda||'preco')}</div>
@@ -2376,8 +2378,8 @@ function renderProdutoPipeline(produto, boardId, prefix) {
   const board = document.getElementById(boardId);
   if (!board) return;
   const filteredLeads = getProdutoLeads(produto, prefix);
-  const pipeStages = ['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'];
-  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',follow_up:'#ff7b35',qualificado:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',fechado:'#00e5a0'};
+  const pipeStages = ['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado'];
+  const colors = {lead:'#3d8ef8',primeiro_contato:'#00e5a0',qualificacao:'#a855f7',proposta:'#ff4757',negociacao:'#ffcc00',follow_up:'#ff7b35',fechado:'#00e5a0'};
   board.innerHTML = pipeStages.map(stage=>{
     const sd = filteredLeads.filter(l=>l.stage===stage);
     const total = sd.reduce((s,l)=>s+(+l.value||0),0);
@@ -2577,7 +2579,7 @@ function parseCSVFile(file) {
       const rawTemp = (cols[idx.temperatura]||'').toLowerCase();
       const temp = rawTemp.includes('quente')||rawTemp.includes('hot')?'quente':rawTemp.includes('morno')||rawTemp.includes('warm')?'morno':'frio';
       const rawStage = (cols[idx.estagio]||'').toLowerCase();
-      const stage = ['qualificado','proposta','negociacao','fechado','perdido'].find(s=>rawStage.includes(s))||'lead';
+      const stage = ['qualificacao','proposta','negociacao','follow_up','fechado','perdido'].find(s=>rawStage.includes(s))||'lead';
       importedLeads.push({ id:Date.now()+i, name:cols[idx.nome||0]||'', company:cols[idx.empresa]||'', email:cols[idx.email]||'', phone:cols[idx.telefone]||'', value:cols[idx.valor]?parseFloat(cols[idx.valor].replace(/[^\d.]/g,''))||0:0, origin:cols[idx.origem]||'outro', temp, stage, urgency:'media', budget:'nao', createdAt:Date.now(), updatedAt:Date.now() });
     }
     document.getElementById('import-count').textContent = `${importedLeads.length} leads encontrados para importar`;
@@ -2604,7 +2606,7 @@ function confirmImport() {
 }
 
 function downloadTemplate() {
-  const csv = 'Nome,Empresa,Email,Telefone,Valor,Origem,Temperatura,Estágio\nJoão Silva,Acme Ltda,joao@acme.com,(11) 99999-0000,5000,instagram,quente,lead\nMaria Santos,Tech Ltda,maria@tech.com,(21) 98888-1111,12000,indicacao,morno,qualificado\n';
+  const csv = 'Nome,Empresa,Email,Telefone,Valor,Origem,Temperatura,Estágio\nJoão Silva,Acme Ltda,joao@acme.com,(11) 99999-0000,5000,instagram,quente,lead\nMaria Santos,Tech Ltda,maria@tech.com,(21) 98888-1111,12000,indicacao,morno,qualificacao\n';
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='modelo_importacao_aprimore.csv'; a.click();
   showToast('Modelo baixado ✓');
@@ -3272,7 +3274,7 @@ function renderReceitaProduto() {
         </div>`).join('')}
       <div style="margin-top:8px">
         <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Leads por estágio</div>
-        ${['lead','primeiro_contato','follow_up','qualificado','proposta','negociacao','fechado'].map(s=>{
+        ${['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado'].map(s=>{
           const count=list.filter(l=>l.stage===s).length;
           const pct=list.length?Math.round(count/list.length*100):0;
           return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -3345,7 +3347,7 @@ function renderPrevisaoFull() {
   const previsao = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100),0);
   const pessimista = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100*0.6),0);
   const otimista = ativos.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[l.stage]||0)/100*1.4),0);
-  const porEstagio = ['qualificado','proposta','negociacao'].map(s=>{
+  const porEstagio = ['qualificacao','proposta','negociacao','follow_up'].map(s=>{
     const sl=ativos.filter(l=>l.stage===s);
     const val=sl.reduce((sum,l)=>sum+(+l.value*(STAGE_PROB[s]||0)/100),0);
     return{stage:s,count:sl.length,val,prob:STAGE_PROB[s]};
