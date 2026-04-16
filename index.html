@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>APRIMORE - CRM</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 36 36' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='36' height='36' fill='%23111111' rx='8'/%3E%3Crect x='13.5' y='13.5' width='9' height='9' fill='%23E8590C' rx='1.5'/%3E%3Cpath d='M4 8 Q4 4 8 4 L11 4 Q13 4 13 6 L13 8 Q13 10 11 10 L10 10 L10 11 Q10 13 8 13 L6 13 Q4 13 4 11 Z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M32 8 Q32 4 28 4 L25 4 Q23 4 23 6 L23 8 Q23 10 25 10 L26 10 L26 11 Q26 13 28 13 L30 13 Q32 13 32 11 Z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M4 28 Q4 32 8 32 L11 32 Q13 32 13 30 L13 28 Q13 26 11 26 L10 26 L10 25 Q10 23 8 23 L6 23 Q4 23 4 25 Z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M32 28 Q32 32 28 32 L25 32 Q23 32 23 30 L23 28 Q23 26 25 26 L26 26 L26 25 Q26 23 28 23 L30 23 Q32 23 32 25 Z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -27,27 +27,28 @@ const provider = new firebase.auth.GoogleAuthProvider();
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#111111;--surface:#1a1a1a;--surface2:#222222;--surface3:#2a2a2a;
-  --border:#ffffff0f;--border2:#ffffff18;
-  --text:#f0f2f7;--text2:#8a92a8;--text3:#4a5068;
-  --accent:#E8590C;--accent2:#c44a08;--accent-glow:#E8590C20;
-  --blue:#3d8ef8;--blue-light:#1a3a6e;
-  --orange:#E8590C;--orange-light:#2a1500;
-  --red:#ff4757;--red-light:#3d1018;
-  --yellow:#ffcc00;--yellow-light:#3d3000;
-  --purple:#a855f7;--purple-light:#2d1a4a;
-  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
-  --r:10px;--r2:14px;--r3:20px;
-  --shadow:0 4px 24px #00000060;
+  --bg:#0f0f0f;--surface:#171717;--surface2:#1e1e1e;--surface3:#252525;
+  --border:#ffffff0a;--border2:#ffffff14;
+  --text:#ededed;--text2:#8c8c8c;--text3:#555555;
+  --accent:#E8590C;--accent2:#c44a08;--accent-glow:#E8590C18;
+  --blue:#4a90d9;--blue-light:#132030;
+  --orange:#E8590C;--orange-light:#1e1008;
+  --red:#e05252;--red-light:#2a1212;
+  --yellow:#d4a017;--yellow-light:#211a05;
+  --purple:#8b6dcc;--purple-light:#1e1530;
+  --font-head:'Plus Jakarta Sans',sans-serif;--font-body:'Inter',sans-serif;
+  --r:8px;--r2:12px;--r3:16px;
+  --shadow:0 4px 20px #00000050;
 }
 body.light-mode{
-  --bg:#ffffff;--surface:#fafafa;--surface2:#f4f4f5;--surface3:#ebebeb;
-  --border:#e4e4e7;--border2:#d4d4d8;
-  --text:#09090b;--text2:#71717a;--text3:#a1a1aa;
-  --accent-glow:#E8590C15;--red-light:#fef2f2;--blue-light:#eff6ff;
-  --yellow-light:#fefce8;--purple-light:#faf5ff;--orange-light:#fff7ed;
+  --bg:#f5f5f4;--surface:#ffffff;--surface2:#f0efed;--surface3:#e8e7e4;
+  --border:#e0dedd;--border2:#c8c7c4;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#a8a8a8;
+  --accent-glow:#E8590C12;--red-light:#fdf2f2;--blue-light:#f0f6ff;
+  --yellow-light:#fdf9ed;--purple-light:#f6f2ff;--orange-light:#fdf5f0;
+  --shadow:0 2px 12px #0000001a;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden;letter-spacing:-0.01em}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -56,75 +57,72 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
 /* LAYOUT */
 .app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar{width:216px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .content{flex:1;overflow-y:auto;padding:24px}
 
 /* SIDEBAR */
 .logo{padding:16px 14px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
-.logo-icon{width:36px;height:36px;flex-shrink:0}
-.logo-txt{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);letter-spacing:.04em}
-.logo-txt span{color:#E8590C}
-.logo-txt{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)}
+.logo-icon{width:32px;height:32px;flex-shrink:0}
+.logo-txt{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.02em}
+.logo-txt{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text)}
 .logo-txt span{color:var(--accent)}
-.nav{padding:12px 10px;flex:1}
-.nav-group{margin-bottom:20px}
-.nav-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:0 8px;margin-bottom:6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;position:relative;border:none;background:none;width:100%;text-align:left}
+.nav{padding:10px 8px;flex:1}
+.nav-group{margin-bottom:18px}
+.nav-group-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:0 8px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all .12s;position:relative;border:none;background:none;width:100%;text-align:left;font-family:var(--font-body);font-weight:400;letter-spacing:-0.01em}
 .nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:var(--accent-glow);color:var(--accent);font-weight:500}
-.nav-item .badge{margin-left:auto;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
-.nav-item.active{background:#E8590C18;color:#E8590C;font-weight:500}
-.nav-item .badge{margin-left:auto;background:#E8590C;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px}
 .nav-item .badge.red{background:var(--red)}
-.nav-icon{font-size:15px;width:18px;text-align:center}
-.sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.nav-icon{font-size:14px;width:16px;text-align:center;opacity:.7}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
 .sync-pill{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:12px;color:var(--text2)}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#E8590C;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* TOPBAR */
 .topbar-left{display:flex;align-items:center;gap:14px}
-.page-title{font-family:var(--font-head);font-size:16px;font-weight:600}
+.page-title{font-family:var(--font-head);font-size:15px;font-weight:600;letter-spacing:-0.02em}
 .search-wrap{position:relative}
-.search-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px 8px 34px;font-size:13px;color:var(--text);width:220px;font-family:var(--font-body);transition:border .2s}
+.search-input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:7px 12px 7px 32px;font-size:13px;color:var(--text);width:210px;font-family:var(--font-body);transition:border .2s;letter-spacing:-0.01em}
 .search-input:focus{outline:none;border-color:var(--accent)}
-.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
-.topbar-right{display:flex;align-items:center;gap:8px}
-.btn{padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
-.btn-primary{background:#E8590C;color:#fff}
-.btn-primary:hover{background:#c44a08}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.btn{padding:7px 14px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-body);transition:all .12s;letter-spacing:-0.01em}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red)30}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red)25}
 
 /* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:.07;transform:translate(20px,-20px)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:.05;transform:translate(20px,-20px)}
 .stat-card.green::before{background:var(--accent)}
 .stat-card.blue::before{background:var(--blue)}
 .stat-card.orange::before{background:var(--orange)}
 .stat-card.purple::before{background:var(--purple)}
 .stat-card.red::before{background:var(--red)}
-.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.stat-val{font-family:var(--font-body);font-size:26px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-weight:500}
+.stat-val{font-family:var(--font-head);font-size:24px;font-weight:700;line-height:1;letter-spacing:-0.02em}
 .stat-val.green{color:var(--accent)}
 .stat-val.blue{color:var(--blue)}
 .stat-val.orange{color:var(--orange)}
 .stat-val.purple{color:var(--purple)}
-.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
 
 /* SECTION */
 .section{display:none}
 .section.active{display:block}
 
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.card-title{font-family:var(--font-head);font-size:14px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:var(--font-head);font-size:13px;font-weight:600;letter-spacing:-0.01em}
 
 /* LEADS GRID */
 .leads-controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
@@ -424,44 +422,44 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <nav class="nav">
       <div class="nav-group">
         <div class="nav-group-label">Principal</div>
-        <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">☀️</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
+        <button class="nav-item" onclick="goTo('hoje',this)"><span class="nav-icon">◑</span><span>Hoje</span><span class="badge red" id="nav-hoje-badge" style="display:none">0</span></button>
         <div class="nav-has-sub">
-          <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+          <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">▦</span><span>Dashboard</span></button>
           <div class="nav-sub">
             <button class="nav-sub-item" onclick="goTo('followups',this)">Follow-ups</button>
-            <button class="nav-sub-item" onclick="goTo('cadencia',this)">Cadência <span id="nav-cadencia-badge" style="font-size:10px;color:#ff4757"></span></button>
+            <button class="nav-sub-item" onclick="goTo('cadencia',this)">Cadência <span id="nav-cadencia-badge" style="font-size:10px;color:var(--red)"></span></button>
             <button class="nav-sub-item" onclick="goTo('receita',this)">Receita por produto</button>
             <button class="nav-sub-item" onclick="goTo('comparativo',this)">Comparativo semanal</button>
             <button class="nav-sub-item" onclick="goTo('previsao',this)">Previsão de receita</button>
           </div>
         </div>
-        <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">👥</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
+        <button class="nav-item" onclick="goTo('leads',this)"><span class="nav-icon">◎</span><span>Todos os Leads</span><span class="badge" id="nav-leads-badge">0</span></button>
         <div class="nav-has-sub">
-          <button class="nav-item" onclick="goTo('produtos',this)"><span class="nav-icon">📦</span><span>Produtos</span><span class="badge neutral" id="nav-prod-badge">0</span></button>
+          <button class="nav-item" onclick="goTo('produtos',this)"><span class="nav-icon">▣</span><span>Produtos</span><span class="badge neutral" id="nav-prod-badge">0</span></button>
           <div class="nav-sub">
-            <button class="nav-sub-item" onclick="goTo('vendedor_x',this)">Vendedor X <span id="nav-vx-badge" style="font-size:11px;color:var(--text2)">— 0</span></button>
-            <button class="nav-sub-item" onclick="goTo('lider_x',this)">Líder X <span id="nav-lx-badge" style="font-size:11px;color:var(--text2)">— 0</span></button>
-            <button class="nav-sub-item" onclick="goTo('membership',this)">Membership <span id="nav-mb-badge" style="font-size:11px;color:var(--text2)">— 0</span></button>
+            <button class="nav-sub-item" onclick="goTo('vendedor_x',this)">Vendedor X <span id="nav-vx-badge" style="font-size:11px;color:var(--text3)"></span></button>
+            <button class="nav-sub-item" onclick="goTo('lider_x',this)">Líder X <span id="nav-lx-badge" style="font-size:11px;color:var(--text3)"></span></button>
+            <button class="nav-sub-item" onclick="goTo('membership',this)">Membership <span id="nav-mb-badge" style="font-size:11px;color:var(--text3)"></span></button>
           </div>
         </div>
-        <button class="nav-item" onclick="goTo('pipeline',this)"><span class="nav-icon">🏆</span><span>Pipeline</span></button>
-        <button class="nav-item" onclick="goTo('atividades',this)"><span class="nav-icon">📋</span><span>Atividades</span></button>
+        <button class="nav-item" onclick="goTo('pipeline',this)"><span class="nav-icon">▥</span><span>Pipeline</span></button>
+        <button class="nav-item" onclick="goTo('atividades',this)"><span class="nav-icon">≡</span><span>Atividades</span></button>
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Inteligência</div>
-        <button class="nav-item" onclick="goTo('alertas',this)"><span class="nav-icon">🔔</span><span>Alertas</span><span class="badge red" id="nav-alerts-badge">0</span></button>
-        <button class="nav-item" onclick="goTo('relatorios',this)"><span class="nav-icon">📈</span><span>Relatórios</span></button>
+        <button class="nav-item" onclick="goTo('alertas',this)"><span class="nav-icon">◉</span><span>Alertas</span><span class="badge red" id="nav-alerts-badge">0</span></button>
+        <button class="nav-item" onclick="goTo('relatorios',this)"><span class="nav-icon">↗</span><span>Relatórios</span></button>
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Prospecção</div>
-        <button class="nav-item" onclick="goTo('mastermind',this)"><span class="nav-icon">🎯</span><span>Mastermind</span><span class="badge" id="nav-mast-badge">0</span></button>
+        <button class="nav-item" onclick="goTo('mastermind',this)"><span class="nav-icon">◈</span><span>Prospecção Ativa</span><span class="badge" id="nav-mast-badge">0</span></button>
       </div>
     </nav>
     <div class="sidebar-footer">
       <div class="sync-pill"><div class="sync-dot"></div><span id="sync-txt">Conectando...</span></div>
       <div style="display:flex;gap:6px;margin-top:8px">
-        <button onclick="toggleTheme()" id="theme-btn" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">☀️ Claro</button>
-        <button onclick="logout()" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">↩ Sair</button>
+        <button onclick="toggleTheme()" id="theme-btn" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">Tema claro</button>
+        <button onclick="logout()" style="flex:1;background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font-body)">Sair</button>
       </div>
     </div>
   </aside>
@@ -477,7 +475,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         </div>
       </div>
       <div class="topbar-right" id="topbar-right">
-        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 Importar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">Importar</button>
         <button class="btn btn-ghost btn-sm" onclick="openModal('activity')">+ Atividade</button>
         <button class="btn btn-primary" id="btn-novo-lead" onclick="openModal('lead')">+ Novo Lead</button>
         <button class="btn btn-primary" id="btn-novo-mast" style="display:none" onclick="openMastModal()">+ Nova Prospecção</button>
@@ -898,7 +896,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 <!-- MASTERMIND MODAL -->
 <div class="modal-overlay" id="mast-modal">
   <div class="modal" style="width:420px">
-    <div class="modal-title" id="mast-modal-title">🎯 Nova Prospecção</div>
+    <div class="modal-title" id="mast-modal-title">Nova Prospecção</div>
     <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="mf-name" placeholder="Nome da pessoa"></div>
     <div class="form-group"><label class="form-label">Instagram</label>
       <div style="display:flex;align-items:center;gap:8px">
@@ -924,7 +922,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="import-modal">
   <div class="modal" style="width:520px">
-    <div class="modal-title">📥 Importar leads via CSV / Excel</div>
+    <div class="modal-title">Importar leads via CSV / Excel</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7">
       Importe uma planilha CSV com colunas: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">Nome, Empresa, Email, Telefone, Valor, Origem, Temperatura, Estágio</code><br>
       A primeira linha deve ser o cabeçalho. Campos não reconhecidos serão ignorados.
@@ -1172,7 +1170,7 @@ let sortCol = '', sortDir = 1;
 const STAGES = ['lead','primeiro_contato','qualificacao','proposta','negociacao','follow_up','fechado','perdido'];
 const STAGE_LBL = {lead:'Lead',primeiro_contato:'Primeiro Contato',qualificacao:'Qualificação',proposta:'Proposta',negociacao:'Negociação',follow_up:'Follow Up',fechado:'Fechado',perdido:'Perdido'};
 const STAGE_PROB = {lead:10,primeiro_contato:20,qualificacao:40,proposta:60,negociacao:75,follow_up:85,fechado:100,perdido:0};
-const TEMP_LBL = {quente:'🔥 Quente',morno:'🟡 Morno',frio:'❄️ Frio'};
+const TEMP_LBL = {quente:'Quente',morno:'Morno',frio:'Frio'};
 const AV_COLORS = [['#00e5a020','#00e5a0'],['#3d8ef820','#6aaffe'],['#a855f720','#c084fc'],['#ff7b3520','#ff9a5c'],['#ff475720','#ff6b7a']];
 
 function initials(n) { return n.trim().split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'; }
@@ -2100,10 +2098,10 @@ function openModal(type, prefillLeadId) {
   editingId = null;
   actEditId = null;
   if (type === 'lead') {
-    document.getElementById('modal-title').innerHTML = '👤 Novo Lead';
+    document.getElementById('modal-title').innerHTML = 'Novo Lead';
     document.getElementById('modal-form').innerHTML = leadForm({});
   } else {
-    document.getElementById('modal-title').innerHTML = '📋 Nova Atividade';
+    document.getElementById('modal-title').innerHTML = 'Nova Atividade';
     document.getElementById('modal-form').innerHTML = activityForm(prefillLeadId);
   }
   document.getElementById('modal').classList.add('open');
@@ -2114,7 +2112,7 @@ function editActivity(id) {
   const a = activities.find(x=>x.id===id);
   if (!a) return;
   actEditId = id; currentModal = 'activity';
-  document.getElementById('modal-title').innerHTML = '✏️ Editar Atividade';
+  document.getElementById('modal-title').innerHTML = 'Editar Atividade';
   document.getElementById('modal-form').innerHTML = activityForm(a.leadId, a);
   document.getElementById('modal').classList.add('open');
 }
@@ -2129,7 +2127,7 @@ function editLead(id) {
   const l = leads.find(x=>x.id===id);
   if (!l) return;
   editingId = id; currentModal = 'lead';
-  document.getElementById('modal-title').innerHTML = '✏️ Editar Lead';
+  document.getElementById('modal-title').innerHTML = 'Editar Lead';
   document.getElementById('modal-form').innerHTML = leadForm(l);
   document.getElementById('modal').classList.add('open');
 }
@@ -2137,59 +2135,32 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 
 function leadForm(l) {
   const sel = (id,opts,val) => `<select class="form-select" id="${id}">${opts.map(([v,lbl])=>`<option value="${v}"${val===v?' selected':''}>${lbl}</option>`).join('')}</select>`;
-  return `<div class="form-row">
-    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="f-name" value="${l.name||''}" placeholder="Nome completo"></div>
-    <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" id="f-company" value="${l.company||''}" placeholder="Nome da empresa"></div>
+  return `
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="f-name" value="${l.name||''}" placeholder="Nome completo" autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" id="f-company" value="${l.company||''}" placeholder="Nome da empresa" autocomplete="off"></div>
   </div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="f-email" value="${l.email||''}" placeholder="email@empresa.com"></div>
-    <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="f-phone" value="${l.phone||''}" placeholder="(11) 99999-0000"></div>
+    <div class="form-group"><label class="form-label">Telefone / WhatsApp *</label><input class="form-input" id="f-phone" value="${l.phone||''}" placeholder="(11) 99999-0000" autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" id="f-instagram" value="${l.instagram||''}" placeholder="@usuario" autocomplete="off"></div>
   </div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Temperatura</label>${sel('f-temp',[['quente','🔥 Quente'],['morno','🟡 Morno'],['frio','❄️ Frio']],l.temp||'morno')}</div>
-    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['qualificacao','Qualificação'],['proposta','Proposta'],['negociacao','Negociação'],['follow_up','Follow Up'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')} </div>
+    <div class="form-group"><label class="form-label">Produto</label>${sel('f-produto',[['vendedor_x','Vendedor X'],['lider_x','Líder X'],['membership','Membership']],l.produto||'vendedor_x')}</div>
+    <div class="form-group"><label class="form-label">Origem</label>${sel('f-origin',[['indicacao','Indicação'],['instagram','Instagram'],['google','Google'],['anuncio','Anúncio / Tráfego Pago'],['whatsapp','WhatsApp'],['email','E-mail'],['evento','Evento'],['outro','Outro']],l.origin||'outro')}</div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Temperatura</label>${sel('f-temp',[['quente','Quente'],['morno','Morno'],['frio','Frio']],l.temp||'morno')}</div>
+    <div class="form-group"><label class="form-label">Estágio</label>${sel('f-stage',[['lead','Lead'],['primeiro_contato','Primeiro Contato'],['qualificacao','Qualificação'],['proposta','Proposta'],['negociacao','Negociação'],['follow_up','Follow Up'],['fechado','Fechado'],['perdido','Perdido']],l.stage||'lead')}</div>
   </div>
   <div id="f-motivo-wrap" style="${l.stage==='perdido'?'':'display:none'}">
-    <div class="form-group"><label class="form-label">❌ Motivo da perda</label>${sel('f-motivo',[['preco','Preço alto'],['concorrencia','Concorrência'],['sem_interesse','Sem interesse'],['sem_dinheiro','Sem dinheiro agora'],['timing','Timing errado'],['nao_respondeu','Não respondeu'],['outro','Outro']],l.motivoPerda||'preco')}</div>
+    <div class="form-group"><label class="form-label">Motivo da perda</label>${sel('f-motivo',[['preco','Preço alto'],['concorrencia','Concorrência'],['sem_interesse','Sem interesse'],['sem_dinheiro','Sem dinheiro agora'],['timing','Timing errado'],['nao_respondeu','Não respondeu'],['outro','Outro']],l.motivoPerda||'preco')}</div>
   </div>
-  <div class="form-group"><label class="form-label">🎯 Produto de interesse</label>${sel('f-produto',[['vendedor_x','🎯 Vendedor X'],['lider_x','👑 Líder X'],['membership','💎 Membership'],['ambos','Ambos']],l.produto||'vendedor_x')}</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Valor estimado (R$)</label><input class="form-input" id="f-value" type="number" value="${l.value||''}" placeholder="Ex: 5000"></div>
-    <div class="form-group"><label class="form-label">Origem</label>${sel('f-origin',[['indicacao','🤝 Indicação'],['instagram','📸 Instagram'],['google','🔍 Google'],['anuncio','📣 Anúncio / Tráfego Pago'],['whatsapp','💬 WhatsApp'],['email','✉️ E-mail'],['evento','🎪 Evento'],['outro','📌 Outro']],l.origin||'outro')}</div>
+    <div class="form-group"><label class="form-label">Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
   </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">⏱️ Cadência (dias entre contatos)</label>
-      <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" min="1" max="14" value="${l.cadencia||3}" id="f-cadencia" oninput="document.getElementById('f-cadencia-val').textContent=this.value+'d'" style="flex:1">
-        <span id="f-cadencia-val" style="font-size:13px;font-weight:600;color:var(--accent);min-width:28px;text-align:center">${l.cadencia||3}d</span>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Urgência</label>${sel('f-urgency',[['alta','Alta'],['media','Média'],['baixa','Baixa']],l.urgency||'media')}</div>
-  </div>
-  <div class="form-group"><label class="form-label">Dor / problema principal</label><input class="form-input" id="f-pain" value="${l.pain||''}" placeholder="Qual problema ele quer resolver?"></div>
-  <div class="form-group"><label class="form-label">Desejo / resultado esperado</label><input class="form-input" id="f-desire" value="${l.desire||''}" placeholder="O que ele quer alcançar?"></div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">💬 Mensagens enviadas (0-10)</label>
-      <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" min="0" max="10" value="${l.mensagens||0}" id="f-mensagens" oninput="document.getElementById('f-mensagens-val').textContent=this.value" style="flex:1">
-        <span id="f-mensagens-val" style="font-size:14px;font-weight:600;color:#3d8ef8;min-width:20px;text-align:center">${l.mensagens||0}</span>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">📞 Ligações feitas (0-10)</label>
-      <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" min="0" max="10" value="${l.ligacoes||0}" id="f-ligacoes" oninput="document.getElementById('f-ligacoes-val').textContent=this.value" style="flex:1">
-        <span id="f-ligacoes-val" style="font-size:14px;font-weight:600;color:#ff7b35;min-width:20px;text-align:center">${l.ligacoes||0}</span>
-      </div>
-    </div>
-  </div>
-  <div class="form-group"><label class="form-label">📅 Data de follow-up</label><input class="form-input" id="f-followup" type="date" value="${l.followup||''}"></div>
-  <div class="form-group"><label class="form-label">⚡ Próxima ação <span style="color:var(--accent)">*</span></label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      ${['Ligar','WhatsApp','Enviar proposta','Marcar reunião','Aguardar resposta','Outro'].map(a=>`<button type="button" onclick="setProximaAcao('${a}',this)" class="btn btn-ghost btn-sm" style="font-size:11px;${(l.proximaAcao===a)?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${a}</button>`).join('')}
-    </div>
-    <input class="form-input" id="f-proxima-acao" value="${l.proximaAcao||''}" placeholder="Ex: Ligar amanhã às 14h para fechar proposta">
-  </div>
-  <div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Observações, contexto...">${l.notes||''}</textarea></div>
+  <div class="form-group"><label class="form-label">Dor principal</label><input class="form-input" id="f-pain" value="${l.pain||''}" placeholder="Qual problema ele quer resolver?"></div>
+  <div class="form-group"><label class="form-label">Observações</label><textarea class="form-textarea" id="f-notes" placeholder="Contexto da conversa, próximos passos...">${l.notes||''}</textarea></div>
   <script>document.getElementById('f-stage').addEventListener('change',function(){document.getElementById('f-motivo-wrap').style.display=this.value==='perdido'?'block':'none';})<\/script>`;
 }
 
@@ -2230,32 +2201,32 @@ function saveModal() {
     if (!name) { showToast('Informe o nome do lead','#ff4757'); return; }
     const data = {
       name, company:document.getElementById('f-company').value.trim(),
-      email:document.getElementById('f-email').value.trim(), phone:document.getElementById('f-phone').value.trim(),
+      phone:document.getElementById('f-phone').value.trim(),
+      instagram:document.getElementById('f-instagram')?.value.trim()||'',
       temp:document.getElementById('f-temp').value, stage:document.getElementById('f-stage').value,
       value:document.getElementById('f-value').value, origin:document.getElementById('f-origin').value,
-      urgency:document.getElementById('f-urgency').value, budget:'nao',
-      contatos:parseInt(document.getElementById('f-mensagens').value)||0,
-      mensagens:parseInt(document.getElementById('f-mensagens').value)||0,
-      ligacoes:parseInt(document.getElementById('f-ligacoes').value)||0,
-      pain:document.getElementById('f-pain').value.trim(), desire:document.getElementById('f-desire').value.trim(),
+      urgency:'media', budget:'nao',
+      contatos:0, mensagens:l?.mensagens||0, ligacoes:l?.ligacoes||0,
+      pain:document.getElementById('f-pain').value.trim(),
+      desire:'', email:'',
       notes:document.getElementById('f-notes').value.trim(),
       followup:document.getElementById('f-followup').value,
       produto:document.getElementById('f-produto').value,
-      cadencia:parseInt(document.getElementById('f-cadencia').value)||3,
       motivoPerda:document.getElementById('f-motivo')?.value||'',
-      proximaAcao:document.getElementById('f-proxima-acao')?.value.trim()||'',
+      proximaAcao:'',
     };
     if (editingId) {
       const idx = leads.findIndex(x=>x.id===editingId);
       const updated = {...leads[idx],...data,updatedAt:Date.now()};
       leads[idx] = updated;
       saveLead(updated);
-      showToast('Lead atualizado ✓');
+      showToast('Lead atualizado');
     } else {
-      const newLead = {...data, id:Date.now(), createdAt:Date.now(), updatedAt:Date.now()};
+      const newLead = {...data, id:Date.now(), createdAt:Date.now(), updatedAt:Date.now(),
+        cadenciaInicio: Date.now(), cadenciaPassos: [], cadenciaEncerrada: false};
       leads.push(newLead);
       saveLead(newLead);
-      showToast('Lead adicionado ✓');
+      showToast('Lead adicionado — cadência iniciada automaticamente');
     }
   } else {
     const title = document.getElementById('f-atitle').value.trim();
@@ -2505,7 +2476,7 @@ function renderProdutoTable(produto, wrapId, labelId, prefix) {
 
 function openModalProduto(produto) {
   currentModal = 'lead'; editingId = null;
-  document.getElementById('modal-title').innerHTML = produto==='vendedor_x'?'🎯 Novo Lead — Vendedor X':'👑 Novo Lead — Líder X';
+  document.getElementById('modal-title').innerHTML = produto==='vendedor_x'?'Novo Lead — Vendedor X':'Novo Lead — Líder X';
   document.getElementById('modal-form').innerHTML = leadForm({produto});
   document.getElementById('modal').classList.add('open');
 }
@@ -2515,7 +2486,7 @@ function goTo(name, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
-  const titles = {hoje:'☀️ Hoje',dashboard:'Dashboard',leads:'Todos os Leads',produtos:'📦 Produtos',vendedor_x:'🎯 Vendedor X',lider_x:'👑 Líder X',membership:'💎 Membership',pipeline:'Pipeline',cadencia:'🔁 Cadência de Primeiro Contato',atividades:'Atividades',alertas:'Alertas & IA',relatorios:'Relatórios',mastermind:'🎯 Prospecção Ativa Mastermind',followups:'📅 Follow-ups',receita:'💰 Receita por Produto',comparativo:'📈 Comparativo Semanal',previsao:'🔮 Previsão de Receita'};
+  const titles = {hoje:'Hoje',dashboard:'Dashboard',leads:'Todos os Leads',produtos:'Produtos',vendedor_x:'Vendedor X',lider_x:'Líder X',membership:'Membership',pipeline:'Pipeline',cadencia:'Cadência de Primeiro Contato',atividades:'Atividades',alertas:'Alertas',relatorios:'Relatórios',mastermind:'Prospecção Ativa',followups:'Follow-ups',receita:'Receita por Produto',comparativo:'Comparativo Semanal',previsao:'Previsão de Receita'};
   document.getElementById('page-title').textContent = titles[name]||name;
   document.getElementById('btn-novo-lead').style.display = name==='mastermind'?'none':'inline-flex';
   document.getElementById('btn-novo-mast').style.display = name==='mastermind'?'inline-flex':'none';
@@ -2650,7 +2621,7 @@ function renderMastermind() {
 
 function openMastModal() {
   mastEditId = null;
-  document.getElementById('mast-modal-title').textContent = '🎯 Nova Prospecção';
+  document.getElementById('mast-modal-title').textContent = 'Nova Prospecção';
   document.getElementById('mf-name').value='';
   document.getElementById('mf-insta').value='';
   document.getElementById('mf-fase').value='primeiro_contato';
@@ -2660,7 +2631,7 @@ function openMastModal() {
 function editMast(id) {
   const p = prospecoes.find(x=>x.id===id); if(!p) return;
   mastEditId = id;
-  document.getElementById('mast-modal-title').textContent = '✏️ Editar Prospecção';
+  document.getElementById('mast-modal-title').textContent = 'Editar Prospecção';
   document.getElementById('mf-name').value = p.name||'';
   document.getElementById('mf-insta').value = p.insta||'';
   document.getElementById('mf-fase').value = p.fase||'primeiro_contato';
@@ -2799,13 +2770,13 @@ function toggleTheme() {
   isDark = !isDark;
   document.body.classList.toggle('light-mode', !isDark);
   const btn = document.getElementById('theme-btn');
-  if (btn) btn.textContent = isDark ? '☀️ Claro' : '🌙 Escuro';
+  if (btn) btn.textContent = isDark ? 'Tema claro' : 'Tema escuro';
   try { localStorage.setItem('crm_theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
 function loadTheme() {
   try {
     const t = localStorage.getItem('crm_theme');
-    if (t === 'light') { isDark = false; document.body.classList.add('light-mode'); const btn = document.getElementById('theme-btn'); if(btn) btn.textContent = '🌙 Escuro'; }
+    if (t === 'light') { isDark = false; document.body.classList.add('light-mode'); const btn = document.getElementById('theme-btn'); if(btn) btn.textContent = 'Tema escuro'; }
   } catch(e) {}
 }
 
@@ -2993,17 +2964,17 @@ function renderProdutosOverview() {
 
 // Fluxo definido pelo usuário: dia → {canal, tipo, descricao}
 const CADENCIA_FLUXO = [
-  { dia: 0, canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem inicial', desc: 'Primeiro contato — apresentação e proposta de valor' },
-  { dia: 1, canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem de reforço', desc: 'Segundo contato — reforço da mensagem anterior' },
-  { dia: 2, canal: 'ligacao',  tipo: 'call',      label: 'Ligação', desc: 'Ligação de qualificação. Se não atender, enviar mensagem de áudio' },
-  { dia: 3, canal: 'whatsapp', tipo: 'whatsapp', label: 'Follow-up da ligação', desc: 'Mensagem de follow-up referenciando a tentativa de ligação' },
-  { dia: 4, canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem de valor', desc: 'Conteúdo relevante ou prova social para gerar interesse' },
-  { dia: 6, canal: 'ligacao',  tipo: 'call',      label: 'Segunda ligação', desc: 'Segunda tentativa de ligação para qualificação' },
-  { dia: 8, canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem de encerramento', desc: 'Última tentativa — encerrar ou mover para perdido' },
+  { dia: 0,  canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D0', desc: 'Primeiro contato via mensagem. Apresentação e proposta de valor.' },
+  { dia: 1,  canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D1', desc: 'Segundo contato. Reforço da mensagem anterior.' },
+  { dia: 3,  canal: 'ligacao',  tipo: 'call',     label: 'Ligação — D3',  desc: 'Primeira tentativa de ligação. Se não atender, enviar áudio.' },
+  { dia: 4,  canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D4', desc: 'Follow-up da ligação. Referenciar tentativa anterior.' },
+  { dia: 6,  canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D6', desc: 'Mensagem de valor. Conteúdo relevante ou prova social.' },
+  { dia: 8,  canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D8', desc: 'Sétima tentativa de contato.' },
+  { dia: 10, canal: 'whatsapp', tipo: 'whatsapp', label: 'Mensagem — D10', desc: 'Último contato da cadência. Encerrar ou mover para perdido.' },
 ];
 
-const CANAL_ICON = { whatsapp: '💬', ligacao: '📞', email: '✉️', instagram: '📸' };
-const CANAL_COR  = { whatsapp: '#00e5a0', ligacao: '#3d8ef8', email: '#a855f7', instagram: '#ff7b35' };
+const CANAL_ICON = { whatsapp: 'Mensagem', ligacao: 'Ligação', email: 'E-mail', instagram: 'Instagram' };
+const CANAL_COR  = { whatsapp: '#4a90d9', ligacao: '#E8590C', email: '#8b6dcc', instagram: '#d4a017' };
 
 let cadenciaFilter = 'pendentes';
 
